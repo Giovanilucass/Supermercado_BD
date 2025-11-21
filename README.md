@@ -1,13 +1,13 @@
 # Supermercado
 
-## Informações sobre os integrantes do grupo (Nome e Número USP). 
-Bruno Tenorio Park
-Carolina Numata Pereira
-Lucas Giovani Santos Ross
-Tiago Silveira Almeida
-Vinicius Chirnev Panhoca
+## Informações sobre os integrantes do grupo
+Bruno Tenorio Park,
+Carolina Numata Pereira,
+Lucas Giovani Santos Ross,
+Tiago Silveira Almeida,
+Vinicius Chirnev Panhoca.
 
-## Breve descrição do minimundo (domínio) escolhido. 
+## Breve descrição do minimundo (domínio) escolhido
 O nosso minimundo é um Supermercado Atacadista, com funcionários, gerentes, produtos e infraestrutura para exposição dos produtos (prateleiras, geladeiras, freezers, etc.), além de relações de entrada e saída financeira.
 
 A partir disso, o banco de dados que será construído deverá auxiliar na gerência do supermercado a armazenar e analisar dados sobre os produtos em estoque, as vendas, as compras, os funcionários contratados e além dos clientes e fornecedores cadastrados.
