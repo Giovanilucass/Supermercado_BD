@@ -45,7 +45,7 @@ produtos comprados (tipos, quantidades e lotes), valor de saída, data e hora
 Repositório criado como um projeto de banco de dados para um Supermercado Atacadista por alunos do segundo semestre de 2025 de Banco de Dados 1.
 
 ## Diagrama Entidade-Relacionamento
-![Diagrama_Entidade-Relacionamento.png](https://github.com/Giovanilucass/Supermercado_BD/blob/main/Diagrama%20Entidade-Relacionamento.png)
+![Diagrama_Entidade-Relacionamento.png]([https://github.com/Giovanilucass/Supermercado_BD/blob/main/Diagrama%20Entidade-Relacionamento.png](https://github.com/Giovanilucass/Supermercado_BD/blob/main/Diagrama%20Entidade-Relacionamento.png))
 
 ## Tabela de Relacionamentos
 ![Tabela_de_Relacionamentos.png](https://github.com/Giovanilucass/Supermercado_BD/blob/main/Tabela%20de%20Relacionamentos.png)
