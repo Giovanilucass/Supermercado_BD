@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermercado Voltante - Fornecedores</title>
+    <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="styles/fornecedores.css"> <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="header"></header> 
+    <div id="toast-container"></div>
+
+    <main class="estoque-content">
+        
+        <section class="stock-main-panel">
+            
+            <div class="stock-filters-bar">
+                <div class="filters-row-top full-width">
+                    <div class="hash-icon">#</div>
+                    <input type="text" id="filter-sup-name" placeholder="Inserir Nome do Fornecedor" class="filter-input big">
+                    <input type="text" id="filter-sup-cnpj" placeholder="Inserir CNPJ do Fornecedor" class="filter-input medium">
+                    <button class="btn-search-stock" id="btn-filter-trigger"><i class="fas fa-search"></i></button>
+                </div>
+                </div>
+
+            <div class="stock-list-container" id="supplier-list">
+                </div>
+        </section>
+
+        <aside class="stock-sidebar">
+            <div class="stock-actions-panel">
+                <div class="stock-actions-header">
+                    <h3>REGISTRAR FORNECEDOR</h3>
+                </div>
+                
+                <div class="stock-actions-body">
+                    <div id="sup-default-view">
+                        <button id="btn-abrir-form-sup" class="btn-register-new-product">REGISTRAR NOVO FORNECEDOR</button>
+                    </div>
+
+                    <div id="sup-form-view" class="hidden">
+                        <form class="stock-register-form" id="form-sup-register">
+                            
+                            <div class="sidebar-field">
+                                <label>CNPJ</label>
+                                <input type="text" id="reg-sup-cnpj" class="input-sidebar-stock" required>
+                            </div>
+
+                            <div class="sidebar-field">
+                                <label>Nome</label>
+                                <input type="text" id="reg-sup-name" class="input-sidebar-stock" required>
+                            </div>
+
+                            <div class="sidebar-field">
+                                <label>E-mail</label>
+                                <input type="email" id="reg-sup-email" class="input-sidebar-stock" required>
+                            </div>
+
+                            <div class="sidebar-buttons-group">
+                                <button type="submit" class="btn-sidebar-action confirm" id="btn-confirm-sup-reg" disabled>REGISTRAR NOVO FORNECEDOR</button>
+                                <button type="button" id="btn-cancel-sup-reg" class="btn-sidebar-action cancel">CANCELAR</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="logo-sidebar-container">
+                 <div class="logo-wrapper-small">
+                    <img src="assets/LogoVermelha.png" alt="Logo" class="sidebar-logo-img">
+                 </div>
+            </div>
+        </aside>
+    </main>
+
+    <div id="overlay-sup-edit" class="modal-overlay hidden">
+        <div class="modal-box edit-modal">
+            <div class="modal-header">
+                <h2>EDITAR FORNECEDOR</h2>
+            </div>
+            <form id="form-sup-edit" class="modal-form">
+                
+                <div class="modal-field">
+                    <label>CNPJ</label>
+                    <div class="input-with-icon">
+                        <input type="text" id="edit-sup-cnpj" readonly>
+                        <i class="fas fa-lock"></i>
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label>Nome</label>
+                    <input type="text" id="edit-sup-name" required>
+                </div>
+
+                <div class="modal-field">
+                    <label>E-mail</label>
+                    <input type="email" id="edit-sup-email" required>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-modal confirm">CONFIRMAR EDIÇÃO</button>
+                    <button type="button" class="btn-modal cancel" id="btn-cancel-sup-edit">CANCELAR</button>
+                    <button type="button" class="btn-modal delete" id="btn-sup-delete-init">DELETAR FORNECEDOR</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="overlay-delete" class="modal-overlay hidden">
+        <div class="modal-box delete-modal">
+            <h3>Tem certeza?</h3>
+            <p>Você está prestes a remover este registro permanentemente.</p>
+            <div class="modal-actions row">
+                <button type="button" class="btn-modal delete" id="btn-confirm-delete">SIM, REMOVER</button>
+                <button type="button" class="btn-modal cancel" id="btn-cancel-delete">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/shared.js"></script>
+    <script src="scripts/fornecedores.js"></script> 
+</body>
+</html>

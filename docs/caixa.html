@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermercado Voltante - Caixa</title>
+    <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="styles/caixa.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="header"></header> 
+    
+    <div id="toast-container"></div>
+
+    <main class="caixa-content">
+        
+        <!-- COLUNA DA ESQUERDA: LISTA DE PRODUTOS -->
+        <section class="products-section">
+            
+            <!-- Barra de inserção -->
+            <div class="add-product-bar">
+                <div class="hash-box">#</div>
+                <input type="text" id="input-prod-code" placeholder="Insira o código do produto manualmente" class="input-product-code">
+                <div class="qtd-wrapper">
+                    <span class="qtd-label">Qtd.</span>
+                    <input type="number" id="input-prod-qtd" value="1" min="1" class="input-qtd-small">
+                </div>
+                <button class="btn-add-product" id="btn-add-item"><i class="fas fa-plus"></i></button>
+            </div>
+
+            <!-- Cabeçalho da Tabela (Visual) -->
+            <div class="cart-header-row">
+                <span style="width: 40%;">Produto</span>
+                <span style="width: 15%; text-align: center;">Preço Un.</span>
+                <span style="width: 15%; text-align: center;">Qtd.</span>
+                <span style="width: 15%; text-align: right;">Total</span>
+                <span style="width: 15%;"></span> <!-- Ações -->
+            </div>
+
+            <!-- Lista de Itens (Carrinho) -->
+            <div class="products-list" id="cart-list">
+                <!-- Itens injetados via JS -->
+            </div>
+
+            <!-- Rodapé da Lista -->
+            <div class="products-footer">
+                <a href="#" class="clear-list-link" id="btn-clear-cart"><i class="fas fa-broom"></i> Limpar lista</a>
+                
+                <div class="total-display">
+                    <span class="total-label">TOTAL:</span>
+                    <div class="total-value-box">
+                        <span>R$</span>
+                        <span class="big-price" id="cart-total-display">0,00</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- COLUNA DA DIREITA: GESTÃO DE CLIENTES -->
+        <aside class="client-sidebar">
+            
+            <div class="client-panel">
+                
+                <!-- VISTA 1: BUSCA DE CLIENTE (Padrão) -->
+                <div id="client-search-view">
+                    <div class="client-header">
+                        <h3>VINCULAR CLIENTE À COMPRA</h3>
+                    </div>
+                    <div class="client-body">
+                        <div class="search-client-wrapper">
+                            <input type="text" id="input-client-cpf" placeholder="Inserir CPF do cliente" class="input-search-client">
+                            <button id="btn-search-client" class="search-icon-btn"><i class="fas fa-search"></i></button>
+                        </div>
+                        <button class="btn-register-client-trigger" id="btn-go-register-client">REGISTRAR NOVO CLIENTE</button>
+                    </div>
+                </div>
+
+                <!-- VISTA 2: CLIENTE VINCULADO -->
+                <div id="client-linked-view" class="hidden">
+                    <div class="client-header">
+                        <h3>CLIENTE VINCULADO</h3>
+                    </div>
+                    <div class="client-body">
+                        <div class="search-client-wrapper linked-state">
+                            <input type="text" value="Cliente vinculado!" readonly class="input-search-client success-border">
+                            <i class="fas fa-check search-icon success-icon"></i>
+                        </div>
+
+                        <div class="client-info-box">
+                            <label>Nome</label>
+                            <div class="info-field" id="linked-name">--</div>
+                            
+                            <label>CPF</label>
+                            <div class="info-field" id="linked-cpf">--</div>
+                        </div>
+
+                        <button class="btn-unlink" id="btn-unlink-client">DESVINCULAR CLIENTE</button>
+                    </div>
+                </div>
+
+                <!-- VISTA 3: REGISTRO DE CLIENTE -->
+                <div id="client-register-view" class="hidden">
+                    <div class="client-header red-bg">
+                        <h3>REGISTRAR CLIENTE</h3>
+                    </div>
+                    <form class="client-register-form red-bg" id="form-client-register">
+                        
+                        <div class="sidebar-field">
+                            <label>CPF</label>
+                            <input type="text" id="reg-cli-cpf" class="input-sidebar-stock" required>
+                        </div>
+                        <div class="sidebar-field">
+                            <label>Nome</label>
+                            <input type="text" id="reg-cli-name" class="input-sidebar-stock" required>
+                        </div>
+                        
+                        <!-- Data de Nascimento -->
+                        <div class="sidebar-field">
+                            <label>Data de nascimento</label>
+                            <div class="date-row-sidebar">
+                                <input type="text" placeholder="DD" class="input-sidebar-date">
+                                <input type="text" placeholder="MM" class="input-sidebar-date">
+                                <input type="text" placeholder="YYYY" class="input-sidebar-date">
+                            </div>
+                        </div>
+
+                        <div class="row-field">
+                             <div class="sidebar-field half">
+                                <label>Telefone</label>
+                                <input type="text" placeholder="(XX) XXXXX-XXXX" class="input-sidebar-stock">
+                             </div>
+                             <div class="sidebar-field half">
+                                <label>Tipo</label>
+                                <select class="input-sidebar-stock">
+                                    <option>Celular</option>
+                                    <option>Residencial</option>
+                                </select>
+                             </div>
+                        </div>
+
+                        <div class="sidebar-buttons-group">
+                            <button type="submit" class="btn-sidebar-action confirm">REGISTRAR NOVO CLIENTE</button>
+                            <button type="button" id="btn-cancel-client-reg" class="btn-sidebar-action cancel">CANCELAR</button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+
+            <p class="confirmation-text">Confirme os dados pessoais do cliente antes de finalizar a venda!</p>
+
+            <div class="logo-sidebar-container">
+                 <div class="logo-wrapper-small">
+                    <img src="assets/LogoVermelha.png" alt="Logo" class="sidebar-logo-img">
+                 </div>
+            </div>
+
+            <button class="btn-confirm-sale" id="btn-finish-sale">CONFIRMAR VENDA</button>
+
+        </aside>
+
+    </main>
+
+    <!-- OVERLAY: PAGAMENTO -->
+    <div id="overlay-payment" class="modal-overlay hidden">
+        <div class="modal-box payment-modal">
+            <div style="text-align: center;">
+                <i class="fas fa-check-circle" style="font-size: 60px; color: #4CAF50; margin-bottom: 20px;"></i>
+                <h2>VENDA REALIZADA!</h2>
+                <p style="margin-bottom: 20px;">Pagamento confirmado.</p>
+                <img src="https://i.pinimg.com/originals/83/57/1e/83571efa405fc34a2f8cb03c3656b58d.jpg" alt="Stonks Meme" style="width: 100%; max-width: 250px; border-radius: 8px;">
+                <button class="btn-modal confirm" id="btn-close-payment" style="background-color: #e53935; color: white; border: none; margin-top: 20px; width: 100%;">NOVA VENDA</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- POP-UP: CONFIRMAÇÃO DESVÍNCULO -->
+    <div id="overlay-unlink" class="modal-overlay hidden">
+        <div class="modal-box delete-modal">
+            <h3>Desvincular Cliente?</h3>
+            <p>O cliente atual será removido desta venda.</p>
+            <div class="modal-actions row">
+                <button type="button" class="btn-modal delete" id="btn-confirm-unlink">SIM, DESVINCULAR</button>
+                <button type="button" class="btn-modal cancel" id="btn-cancel-unlink">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/shared.js"></script>
+	<script src="scripts/caixa.js"></script>
+
+</body>
+</html>

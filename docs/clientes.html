@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermercado Voltante - Clientes</title>
+    <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="styles/clientes.css"> <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="header"></header> 
+    <div id="toast-container"></div>
+
+    <main class="estoque-content">
+        
+        <section class="stock-main-panel">
+            
+            <div class="stock-filters-bar">
+                <div class="filters-row-top full-width">
+                    <div class="hash-icon">#</div>
+                    <input type="text" id="filter-cli-name" placeholder="Inserir Nome do Cliente" class="filter-input big">
+                    <input type="text" id="filter-cli-cpf" placeholder="Inserir CPF do Cliente" class="filter-input medium">
+                    <button class="btn-search-stock" id="btn-filter-trigger"><i class="fas fa-search"></i></button>
+                </div>
+                
+                <div class="filters-row-bottom">
+                    <span class="filter-label">Min.</span>
+                    <input type="number" id="filter-year-min" placeholder="Ano (YYYY)" class="filter-input medium">
+                    
+                    <span class="filter-label">Máx.</span>
+                    <input type="number" id="filter-year-max" placeholder="Ano (YYYY)" class="filter-input medium">
+                </div>
+            </div>
+
+            <div class="stock-list-container" id="client-list">
+                </div>
+        </section>
+
+        <aside class="stock-sidebar">
+            <div class="stock-actions-panel">
+                <div class="stock-actions-header">
+                    <h3>REGISTRAR CLIENTE</h3>
+                </div>
+                
+                <div class="stock-actions-body">
+                    <div id="cli-default-view">
+                        <button id="btn-abrir-form-cli" class="btn-register-new-product">REGISTRAR NOVO CLIENTE</button>
+                    </div>
+
+                    <div id="cli-form-view" class="hidden">
+                        <form class="stock-register-form" id="form-cli-register">
+                            
+                            <div class="sidebar-field">
+                                <label>CPF</label>
+                                <input type="text" id="reg-cli-cpf" class="input-sidebar-stock" required>
+                            </div>
+
+                            <div class="sidebar-field">
+                                <label>Nome</label>
+                                <input type="text" id="reg-cli-name" class="input-sidebar-stock" required>
+                            </div>
+
+                            <div class="sidebar-field">
+                                <label>Data de nascimento</label>
+                                <div class="date-row-sidebar">
+                                    <input type="text" id="reg-cli-dd" placeholder="DD" class="input-sidebar-date" maxlength="2" required>
+                                    <input type="text" id="reg-cli-mm" placeholder="MM" class="input-sidebar-date" maxlength="2" required>
+                                    <input type="text" id="reg-cli-yyyy" placeholder="YYYY" class="input-sidebar-date" maxlength="4" required>
+                                </div>
+                            </div>
+
+                            <div class="sidebar-field">
+                                <label>Telefone 1</label>
+                                <div class="phone-row">
+                                    <input type="text" id="reg-cli-phone1" placeholder="(XX) XXXXX-XXXX" class="input-sidebar-stock phone-input">
+                                    <select id="reg-cli-type1" class="input-sidebar-stock phone-select">
+                                        <option value="Celular">Celular</option>
+                                        <option value="Residencial">Residencial</option>
+                                        <option value="Comercial">Comercial</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="sidebar-field">
+                                <label>Telefone 2 (Opcional)</label>
+                                <div class="phone-row">
+                                    <input type="text" id="reg-cli-phone2" placeholder="(XX) XXXXX-XXXX" class="input-sidebar-stock phone-input">
+                                    <select id="reg-cli-type2" class="input-sidebar-stock phone-select">
+                                        <option value="Celular">Celular</option>
+                                        <option value="Residencial">Residencial</option>
+                                        <option value="Comercial">Comercial</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="sidebar-buttons-group">
+                                <button type="submit" class="btn-sidebar-action confirm" id="btn-confirm-cli-reg" disabled>REGISTRAR NOVO CLIENTE</button>
+                                <button type="button" id="btn-cancel-cli-reg" class="btn-sidebar-action cancel">CANCELAR</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="logo-sidebar-container">
+                 <div class="logo-wrapper-small">
+                    <img src="assets/LogoVermelha.png" alt="Logo" class="sidebar-logo-img">
+                 </div>
+            </div>
+        </aside>
+    </main>
+
+    <div id="overlay-cli-edit" class="modal-overlay hidden">
+        <div class="modal-box edit-modal">
+            <div class="modal-header">
+                <h2>EDITAR CLIENTE</h2>
+            </div>
+            <form id="form-cli-edit" class="modal-form">
+                
+                <div class="modal-field">
+                    <label>CPF</label>
+                    <div class="input-with-icon">
+                        <input type="text" id="edit-cli-cpf" readonly>
+                        <i class="fas fa-lock"></i>
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label>Nome</label>
+                    <input type="text" id="edit-cli-name" required>
+                </div>
+
+                <div class="modal-field">
+                    <label>Data de nascimento</label>
+                    <div class="date-row-sidebar" style="justify-content: space-between;">
+                        <input type="text" id="edit-cli-dd" placeholder="DD" class="input-sidebar-date" style="color: black;" maxlength="2">
+                        <input type="text" id="edit-cli-mm" placeholder="MM" class="input-sidebar-date" style="color: black;" maxlength="2">
+                        <input type="text" id="edit-cli-yyyy" placeholder="YYYY" class="input-sidebar-date" style="color: black;" maxlength="4">
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label>Telefone 1</label>
+                    <div class="phone-row">
+                        <input type="text" id="edit-cli-phone1" class="input-white phone-input" placeholder="(XX) XXXXX-XXXX">
+                        <select id="edit-cli-type1" class="input-white phone-select">
+                            <option value="Celular">Celular</option>
+                            <option value="Residencial">Residencial</option>
+                            <option value="Comercial">Comercial</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label>Telefone 2</label>
+                    <div class="phone-row">
+                        <input type="text" id="edit-cli-phone2" class="input-white phone-input" placeholder="(XX) XXXXX-XXXX">
+                        <select id="edit-cli-type2" class="input-white phone-select">
+                            <option value="Celular">Celular</option>
+                            <option value="Residencial">Residencial</option>
+                            <option value="Comercial">Comercial</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-modal confirm">CONFIRMAR EDIÇÃO</button>
+                    <button type="button" class="btn-modal cancel" id="btn-cancel-cli-edit">CANCELAR</button>
+                    <button type="button" class="btn-modal delete" id="btn-cli-delete-init">DELETAR CLIENTE</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="overlay-delete" class="modal-overlay hidden">
+        <div class="modal-box delete-modal">
+            <h3>Tem certeza?</h3>
+            <p>Você está prestes a remover este cliente permanentemente.</p>
+            <div class="modal-actions row">
+                <button type="button" class="btn-modal delete" id="btn-confirm-delete">SIM, REMOVER</button>
+                <button type="button" class="btn-modal cancel" id="btn-cancel-delete">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/shared.js"></script>
+    <script src="scripts/clientes.js"></script> 
+</body>
+</html>
