@@ -1,0 +1,15 @@
+/* --- ESTILOS ESPECÍFICOS DE FORNECEDORES --- */
+
+/* Larguras das Colunas da Lista */
+/* Nome ocupa mais espaço, CNPJ e Email dividem o resto */
+.sup-col-name { width: 40%; }
+.sup-col-cnpj { width: 25%; }
+.sup-col-email { width: 25%; }
+.sup-col-btn { width: 10%; display: flex; justify-content: flex-end; }
+
+/* Ajuste para que os textos de email não quebrem feio */
+.stock-input {
+    text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
+}

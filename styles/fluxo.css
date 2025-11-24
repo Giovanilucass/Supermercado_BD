@@ -1,0 +1,257 @@
+/* --- ESTILOS PÁGINA DE FLUXO --- */
+
+/* 1. Dashboard (Cards Superiores) */
+.dashboard-section {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-bottom: 20px;
+    height: 120px;
+}
+
+.dash-card {
+    flex: 1;
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.dash-card h3 {
+    font-size: 14px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+}
+
+.dash-card p {
+    font-size: 28px;
+    font-weight: 900;
+    color: #222;
+}
+
+.dash-card.gray {
+    background-color: #cfcfcf;
+}
+
+.dash-card.green {
+    background-color: #4c8a1e; /* Verde escuro */
+}
+.dash-card.green h3, .dash-card.green p {
+    color: white;
+}
+
+/* 2. Painel Principal */
+.fluxo-list-panel {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    height: calc(100% - 140px); /* Desconta o dashboard */
+}
+
+/* Filtros Específicos */
+.fluxo-filters-bar {
+    background-color: var(--primary-color);
+    padding: 15px;
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.filter-label {
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    margin-right: 5px;
+}
+
+/* Inputs de Filtro */
+.filter-input.small { width: 120px; }
+.filter-input.medium { width: 150px; text-align: center; }
+
+/* Cabeçalho da Tabela de Fluxo */
+.fluxo-list-header {
+    display: flex;
+    background-color: #ddd;
+    padding: 10px 15px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #444;
+    border-bottom: 1px solid #ccc;
+}
+
+/* Linha da Lista */
+.fluxo-item-row {
+    background-color: #f9f9f9;
+    padding: 10px 15px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.fluxo-item-row:hover {
+    background-color: #eee;
+}
+
+/* Colunas */
+.col-type { width: 5%; display: flex; justify-content: center; }
+.col-date { width: 20%; font-size: 12px; color: #555; font-weight: 700; }
+.col-nf { width: 25%; font-size: 12px; color: #333; }
+.col-origin { width: 25%; font-weight: 700; font-size: 13px; }
+.col-value { width: 15%; font-weight: 900; font-size: 13px; }
+.col-details { width: 10%; display: flex; justify-content: center; }
+
+/* Indicadores (Bolinhas) */
+.indicator-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.dot-green { background-color: #4c8a1e; }
+.dot-red { background-color: var(--primary-color); }
+
+/* Cores dos Valores */
+.val-green { color: #4c8a1e; }
+.val-red { color: var(--primary-color); }
+
+/* Botão Olho */
+.btn-details {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #777;
+    font-size: 14px;
+    background-color: #ddd;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.btn-details:hover {
+    background-color: #ccc;
+    color: #333;
+}
+
+/* --- MODAL DE DETALHES --- */
+.details-modal {
+    background-color: var(--primary-color); /* Fundo vermelho como na imagem */
+    color: white;
+    width: 500px;
+    border: 2px solid white;
+    padding: 0; /* Padding controlado internamente */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    max-height: 90vh;
+}
+
+.modal-header {
+    padding: 15px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255,255,255,0.3);
+}
+
+.modal-content-scroll {
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.detail-section h4 {
+    font-size: 12px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    opacity: 0.9;
+}
+
+.detail-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.detail-row label {
+    font-size: 11px;
+    font-weight: 700;
+    width: 130px; /* Largura fixa para labels */
+}
+
+.input-locked {
+    background-color: #f0f0f0;
+    border: none;
+    border-radius: 4px;
+    padding: 8px;
+    width: 100%;
+    font-size: 12px;
+    color: #333;
+    padding-right: 30px; /* Espaço pro cadeado */
+}
+
+.lock-icon {
+    position: absolute;
+    right: 10px;
+    color: #555;
+    font-size: 12px;
+}
+
+.input-white {
+    background-color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px;
+    width: 100%;
+    font-size: 13px;
+    color: #333;
+    font-weight: 700;
+}
+
+.items-textarea {
+    width: 100%;
+    height: 100px;
+    border-radius: 4px;
+    border: none;
+    padding: 10px;
+    font-family: 'Roboto', sans-serif;
+    font-size: 12px;
+    resize: none;
+}
+
+.detail-total-box {
+    background-color: white;
+    color: #333;
+    padding: 10px;
+    border-radius: 4px;
+    text-align: center;
+    font-weight: 900;
+    font-size: 16px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.btn-close-modal {
+    background-color: white;
+    color: var(--primary-color);
+    border: none;
+    padding: 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    cursor: pointer;
+    margin-top: 10px;
+}
+.btn-close-modal:hover {
+    background-color: #f0f0f0;
+}

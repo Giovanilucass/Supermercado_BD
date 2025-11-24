@@ -1,0 +1,33 @@
+/* --- ESTILOS ESPECÍFICOS DE FUNCIONÁRIOS --- */
+
+/* Ajuste do container de filtros */
+.filters-row-top.full-width { width: 100%; }
+.filters-row-bottom.space-between { justify-content: space-between; }
+.filter-select.white-bg { background-color: white; color: #333; }
+
+/* Campos de Data no Filtro */
+.date-filter-group { display: flex; gap: 5px; }
+.small-date { width: 40px; text-align: center; }
+.medium-date { width: 60px; text-align: center; }
+
+/* Inputs de Data na Sidebar */
+.date-row-sidebar { display: flex; gap: 5px; }
+.input-sidebar-date {
+    background-color: white;
+    border: none;
+    border-radius: 4px;
+    text-align: center;
+    padding: 8px;
+    font-size: 13px;
+    width: 30%;
+}
+
+/* Larguras das Colunas (Total ~95% + Botão) */
+.emp-col-name { width: 20%; }
+.emp-col-cpf { width: 13%; }
+.emp-col-date { width: 10%; }
+.emp-col-salary { width: 12%; }
+.emp-col-turno { width: 10%; }
+.emp-col-cargo { width: 15%; }
+.emp-col-sup { width: 13%; }
+.emp-col-btn { width: 5%; display: flex; justify-content: flex-end; }
