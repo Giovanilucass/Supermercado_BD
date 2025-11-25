@@ -42,6 +42,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
+// Função auxiliar para converter data HTML (YYYY-MM-DD) para Backend (DD/MM/YYYY)
+function formatDateToBack(dateStr) {
+    if (!dateStr || !dateStr.includes('-')) return dateStr;
+    const [y, m, d] = dateStr.split('-');
+    return `${d}/${m}/${y}`;
+}
+
 /**
  * Função genérica para chamadas à API
  * @param {string} endpoint - Ex: "/produtos"
@@ -270,5 +277,32 @@ window.App = {
     },
     confirmarVenda: async (dadosPagamento) => {
         return await apiRequest('/caixa/confirmar', 'POST', dadosPagamento);
+    },
+	
+	// --- REESTOQUE (NOVOS MÉTODOS) ---
+
+    getReestoque: async (filtros = {}) => {
+        // Tratamento de datas para os filtros
+        if (filtros.data_min) filtros.data_min = formatDateToBack(filtros.data_min);
+        if (filtros.data_max) filtros.data_max = formatDateToBack(filtros.data_max);
+
+        const query = new URLSearchParams(filtros).toString();
+        const res = await apiRequest(`/reestoque?${query}`, 'GET');
+        return res.ok ? await res.json() : [];
+    },
+
+    criarEntradaEstoque: async (dados) => {
+        // Garante formato de data
+        if (dados.data) dados.data = formatDateToBack(dados.data);
+        return await apiRequest('/reestoque', 'POST', dados);
+    },
+
+    atualizarEntradaEstoque: async (nf, dados) => {
+        if (dados.data) dados.data = formatDateToBack(dados.data);
+        return await apiRequest(`/reestoque/${nf}`, 'PUT', dados);
+    },
+
+    deletarEntradaEstoque: async (nf) => {
+        return await apiRequest(`/reestoque/${nf}`, 'DELETE');
     }
 };

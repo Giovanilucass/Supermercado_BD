@@ -1,6 +1,5 @@
-﻿CREATE SCHEMA SUPERMERCADO;
+CREATE SCHEMA SUPERMERCADO;
 SET search_path TO SUPERMERCADO;
-
 
 -- Tabela Produto
 CREATE TABLE Produto (
@@ -14,7 +13,6 @@ CREATE TABLE Produto (
     Ativo BOOLEAN DEFAULT TRUE
 );
 
-
 -- Tabela Fornecedor
 CREATE TABLE Fornecedor (
     CNPJ VARCHAR(18) PRIMARY KEY,
@@ -22,14 +20,12 @@ CREATE TABLE Fornecedor (
     Email VARCHAR(100)
 );
 
-
 -- Tabela Cliente
 CREATE TABLE Cliente (
     CPF VARCHAR(14) PRIMARY KEY,
     Nome VARCHAR(100) NOT NULL,
     Data_Nascimento DATE
 );
-
 
 -- Tabela Funcionario
 CREATE TABLE Funcionario (
@@ -43,7 +39,6 @@ CREATE TABLE Funcionario (
     FOREIGN KEY (CPF_Supervisor) REFERENCES Funcionario(CPF) ON DELETE SET NULL
 );
 
-
 -- Tabela Venda_Fornecedor (Nota Fiscal de Entrada)
 CREATE TABLE Venda_Fornecedor (
     NF BIGSERIAL PRIMARY KEY,
@@ -52,7 +47,6 @@ CREATE TABLE Venda_Fornecedor (
     CNPJ_Fornecedor VARCHAR(18),
     FOREIGN KEY (CNPJ_Fornecedor) REFERENCES Fornecedor(CNPJ) ON DELETE SET NULL
 );
-
 
 -- Tabela Compra_Cliente (Nota Fiscal de Saída)
 CREATE TABLE Compra_Cliente (
@@ -66,10 +60,8 @@ CREATE TABLE Compra_Cliente (
     FOREIGN KEY (CPF_Funcionario) REFERENCES Funcionario(CPF) ON DELETE SET NULL
 );
 
-
 -- Configura NF de compras de cliente para começar em 1 TRILHÃO
 ALTER SEQUENCE compra_cliente_nf_seq RESTART WITH 1000000000000;
-
 
 -- Tabela Inclui (Produtos incluídos na NF de Venda do Fornecedor)
 CREATE TABLE Inclui(
@@ -82,7 +74,6 @@ CREATE TABLE Inclui(
     FOREIGN KEY (Codigo_Produto) REFERENCES Produto(Codigo) ON DELETE SET DEFAULT
 );
 
-
 -- Tabela Abarca (Produtos incluídos na NF de Compra do Cliente)
 CREATE TABLE Abarca(
     NF_Compra_Cliente BIGINT,
@@ -93,7 +84,6 @@ CREATE TABLE Abarca(
     FOREIGN KEY (Codigo_Produto) REFERENCES Produto(Codigo) ON DELETE SET DEFAULT
 );
 
-
 -- Tabela Fornece (Relação entre qual fornecedor fornece qual produto)
 CREATE TABLE Fornece(
     CNPJ_Fornecedor VARCHAR(18),
@@ -102,7 +92,6 @@ CREATE TABLE Fornece(
     FOREIGN KEY (CNPJ_Fornecedor) REFERENCES Fornecedor(CNPJ) ON DELETE CASCADE,
     FOREIGN KEY (Codigo_Produto) REFERENCES Produto(Codigo) ON DELETE CASCADE
 );
-
 
 -- Tabela TELEFONE_Fornecedor
 CREATE TABLE TELEFONE_Fornecedor (
@@ -113,7 +102,6 @@ CREATE TABLE TELEFONE_Fornecedor (
     CONSTRAINT fk_telefone_fornecedor FOREIGN KEY (CNPJ) REFERENCES Fornecedor (CNPJ) ON DELETE CASCADE
 );
 
-
 -- Tabela TELEFONE_Cliente
 CREATE TABLE TELEFONE_Cliente (
     cpf_cliente VARCHAR(14),
@@ -123,16 +111,13 @@ CREATE TABLE TELEFONE_Cliente (
     CONSTRAINT fk_cliente_telefone FOREIGN KEY (cpf_cliente) REFERENCES Cliente (cpf) ON DELETE CASCADE
 );
 
-
 -- ====================================================================================
 -- INSERÇÕES DE DADOS (GARANTINDO O MÍNIMO DE 25 TUPLAS POR TABELA)
 -- ====================================================================================
 
-
 -- PRODUTOS (25 tuplas - OK)
 INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Limite_inferior, Categoria) VALUES
 (0, 'PRODUTO DESCONTINUADO', 0.00, 0, 0, 'SISTEMA'); -- Código 0 obrigatório
-
 
 INSERT INTO Produto (Nome, Preco, Estoque, Limite_inferior, Categoria) VALUES
 ('Arroz Tio João 5kg', 28.90, 100, 20, 'Mercearia'), -- Codigo 1
@@ -159,7 +144,6 @@ INSERT INTO Produto (Nome, Preco, Estoque, Limite_inferior, Categoria) VALUES
 ('Picanha Bovina Maturada Kg', 89.90, 15, 5, 'Açougue'), -- Codigo 22
 ('Frango Inteiro Congelado Kg', 12.90, 30, 10, 'Açougue'), -- Codigo 23
 ('Banana Prata Kg', 5.90, 50, 10, 'Hortifruti'); -- Codigo 24
-
 
 -- FORNECEDORES (25 tuplas - OK)
 INSERT INTO Fornecedor (CNPJ, Nome, Email) VALUES
@@ -188,8 +172,6 @@ INSERT INTO Fornecedor (CNPJ, Nome, Email) VALUES
 ('25.802.469/0001-44', 'Cafeteria Aroma Forte', 'aroma@cafeteria.com'),
 ('27.024.691/0001-66', 'Especiarias do Mundo', 'mundo@especiarias.com'),
 ('28.246.913/0001-88', 'Licores Finos Importadora', 'vendas@licoresfinos.com');
-
-
 
 
 -- FUNCIONÁRIOS (25 tuplas - OK)
@@ -226,8 +208,6 @@ INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_
 ('100.000.000-16', 'Ulisses Vaz', 'Manhã', 2200.00, '1985-06-06', 'Açougueiro', '777.777.777-00');
 
 
-
-
 -- CLIENTES (25 tuplas - OK)
 INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES
 ('123.456.789-00', 'João da Silva', '1990-05-15'),
@@ -255,8 +235,6 @@ INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES
 ('505.050.505-12', 'Elias Pires', '1997-01-08'),
 ('505.050.505-13', 'Gisele Nunes', '1968-05-27'),
 ('505.050.505-14', 'Heitor Almeida', '1990-10-10');
-
-
 
 
 -- TELEFONE_FORNECEDOR (25 tuplas - OK)
@@ -288,8 +266,6 @@ INSERT INTO TELEFONE_Fornecedor (CNPJ, Numero, tipo) VALUES
 ('28.246.913/0001-88', '(11) 5555-1023', 'Comercial');
 
 
-
-
 -- TELEFONE_CLIENTE (25 tuplas - OK)
 INSERT INTO TELEFONE_Cliente (cpf_cliente, Numero, tipo) VALUES
 ('123.456.789-00', '(11) 99999-1111', 'Celular'),
@@ -317,8 +293,6 @@ INSERT INTO TELEFONE_Cliente (cpf_cliente, Numero, tipo) VALUES
 ('505.050.505-12', '(92) 99000-0008', 'Celular'),
 ('505.050.505-13', '(95) 99000-0009', 'Celular'),
 ('505.050.505-14', '(95) 99000-0010', 'Celular');
-
-
 
 
 -- VENDA_FORNECEDOR (25 tuplas - OK)
@@ -350,8 +324,6 @@ INSERT INTO Venda_Fornecedor (Data_Hora, Preco, CNPJ_Fornecedor) VALUES
 (CURRENT_TIMESTAMP - INTERVAL '5 minutes', 1500.00, '28.246.913/0001-88'); -- NF 25
 
 
-
-
 -- COMPRA_CLIENTE (25 tuplas - OK)
 INSERT INTO Compra_Cliente (Valor_Total, Forma_Pagamento, Data_Hora, CPF_Cliente, CPF_Funcionario) VALUES
 (37.40, 'Dinheiro', CURRENT_TIMESTAMP - INTERVAL '10 days', '123.456.789-00', '111.111.111-11'), -- NF 1000000000000
@@ -381,8 +353,6 @@ INSERT INTO Compra_Cliente (Valor_Total, Forma_Pagamento, Data_Hora, CPF_Cliente
 (45.90, 'Crédito', CURRENT_TIMESTAMP - INTERVAL '10 minutes', '505.050.505-08', '222.222.222-22'); -- NF 1000000000024
 
 
-
-
 -- INCLUI (25 tuplas - OK)
 INSERT INTO Inclui (NF_Venda_Fornecedor, Codigo_Produto, Quantidade, Preco_Venda_Fornecedor) VALUES
 (1, 1, 100, 20.00), (1, 2, 100, 6.00), (1, 4, 100, 5.00),
@@ -405,8 +375,6 @@ INSERT INTO Inclui (NF_Venda_Fornecedor, Codigo_Produto, Quantidade, Preco_Venda
 (18, 12, 60, 7.00),                     -- Laticínios
 (19, 8, 120, 14.00),                    -- Mercearia
 (20, 21, 50, 8.00);                     -- Higiene
-
-
 
 
 -- ABARCA (25 tuplas - OK)
@@ -438,8 +406,6 @@ INSERT INTO Abarca (NF_Compra_Cliente, Codigo_Produto, Quantidade) VALUES
 (1000000000024, 17, 2), (1000000000024, 20, 1); -- Sabão em Pó e Papel Higiênico
 
 
-
-
 -- FORNECE (25 tuplas - OK)
 INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES
 ('11.111.111/0001-11', 1), ('11.111.111/0001-11', 2), ('11.111.111/0001-11', 3),
@@ -460,3 +426,4 @@ INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES
 ('20.479.236/0001-77', 7); -- Temperos (Sal)
 -- 5 fornecedores restantes são adicionados apenas para atingir a contagem mínima de fornecedores.
 -- Caso seja necessário aumentar a contagem de Fornece, adicione mais associações válidas aqui.
+
