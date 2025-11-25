@@ -1,188 +1,176 @@
-// scripts/fluxo.js
+// frontend/scripts/fluxo.js
 
 document.addEventListener('DOMContentLoaded', () => {
 
     const listContainer = document.getElementById('transaction-list');
-    if (!listContainer) return; // Segurança
+    if (!listContainer) return;
 
-    // Referências Globais (Utils)
     const { formatMoney, showToast } = window.App;
 
-    // --- 1. GERAÇÃO DE DADOS (MOCK) ---
-    // Vamos simular um histórico de transações misturando Vendas (Entrada) e Compras (Saída)
-    
-    const transactions = [
-        { 
-            id: 1, type: 'in', date: '2025-11-19 10:30:00', nf: '4444000000001', 
-            origin: 'Venda ao Cliente', value: 100.00, payment: 'Cartão de Crédito',
-            items: 'PRODUTO A (x2) - R$ 50,00\nPRODUTO B (x2) - R$ 50,00'
-        },
-        { 
-            id: 2, type: 'out', date: '2025-11-18 14:20:00', nf: '5555000000002', 
-            origin: 'BALDUCO LTDA', cnpj: '12.345.678/0001-90', email: 'contato@balduco.com', phone: '(11) 95555-1234',
-            value: 50.00, 
-            items: 'BISCOITO (cx) - R$ 50,00'
-        },
-        { 
-            id: 3, type: 'in', date: '2025-11-19 11:00:00', nf: '4444000000003', 
-            origin: 'Venda ao Cliente', value: 25.00, payment: 'Dinheiro',
-            items: 'COCA COLA (x1) - R$ 8,00\nDETERGENTE (x2) - R$ 17,00'
-        },
-        { 
-            id: 4, type: 'out', date: '2025-11-15 09:00:00', nf: '5555000000004', 
-            origin: 'YPE LIMPEZA', cnpj: '98.765.432/0001-10', email: 'vendas@ype.com', phone: '(11) 98888-5678',
-            value: 200.00, 
-            items: 'DETERGENTE (cx grande) - R$ 200,00'
-        },
-        { 
-            id: 5, type: 'in', date: '2025-11-19 12:45:00', nf: '4444000000005', 
-            origin: 'Venda ao Cliente', value: 10.00, payment: 'Pix',
-            items: 'BISCOITO (x2) - R$ 10,00'
-        }
-    ];
+    // --- RENDERIZAÇÃO (Dashboard + Lista) ---
+    const renderFluxo = async () => {
+        listContainer.innerHTML = '<p style="text-align:center; padding:20px;">Carregando fluxo...</p>';
 
-    // --- 2. CÁLCULO DO DASHBOARD ---
-    // 2.1. FEEDBACK VISUAL: Lucro Negativo
-    const updateDashboard = () => {
-        let totalIn = 0;
-        let totalOut = 0;
-
-        transactions.forEach(t => {
-            if (t.type === 'in') totalIn += t.value;
-            else totalOut += t.value;
-        });
-
-        const profit = totalIn - totalOut;
-        const dashProfit = document.getElementById('dash-profit');
-
-        document.getElementById('dash-total-in').innerText = `R$ ${formatMoney(totalIn)}`;
-        document.getElementById('dash-total-out').innerText = `R$ ${formatMoney(totalOut)}`;
-        dashProfit.innerText = `R$ ${formatMoney(profit)}`;
-
-        // Lógica da cor
-        if (profit < 0) {
-            dashProfit.parentElement.classList.remove('green');
-            dashProfit.parentElement.classList.add('red');
-        } else {
-            dashProfit.parentElement.classList.remove('red');
-            dashProfit.parentElement.classList.add('green');
-        }
-    };
-
-    // --- 3. RENDERIZAÇÃO DA LISTA ---
-    const renderList = () => {
-        listContainer.innerHTML = '';
-
-        // Filtros
+        // 1. Coleta Filtros
         const nfFilter = document.getElementById('filter-nf').value.trim();
-        const minVal = parseFloat(document.getElementById('filter-val-min').value) || 0;
-        const maxVal = document.getElementById('filter-val-max').value ? parseFloat(document.getElementById('filter-val-max').value) : Infinity;
-        const minDate = document.getElementById('filter-date-min').value; // String simples por enquanto
-        const maxDate = document.getElementById('filter-date-max').value;
+        const valMin = document.getElementById('filter-val-min').value;
+        const valMax = document.getElementById('filter-val-max').value;
+        const dateMin = document.getElementById('filter-date-min').value; // Input date (YYYY-MM-DD)
+        const dateMax = document.getElementById('filter-date-max').value; // Input date (YYYY-MM-DD)
 
-        const filtered = transactions.filter(t => {
-            const matchNF = t.nf.includes(nfFilter);
-            const matchVal = t.value >= minVal && t.value <= maxVal;
-            
-            // Filtro de data simplificado (string match para demo, idealmente parse Date)
-            let matchDate = true;
-            const dateOnly = t.date.split(' ')[0]; // Pega só YYYY-MM-DD ou formato que estiver
-            // Para converter input DD/MM/YYYY para comparação real, seria necessário função extra
-            // Aqui faremos checagem simples se o usuário digitou algo exato
-            if(minDate && !t.date.includes(minDate)) matchDate = false; 
+        const filtros = {
+            nf: nfFilter,
+            valor_min: valMin,
+            valor_max: valMax,
+            min: dateMin,
+            max: dateMax
+        };
 
-            return matchNF && matchVal && matchDate;
-        });
+        try {
+            // 2. Chama API
+            const dados = await window.App.getFluxo(filtros);
+            // Resposta esperada: { lista: [...], resumo: { total_entradas, total_saidas, lucro } }
 
-        if (filtered.length === 0) {
-            listContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">Nenhuma transação encontrada.</p>';
-            if (nfFilter || minVal > 0) showToast('Não há valores para os filtros selecionados', 'error');
-            return;
+            // 3. Atualiza Dashboard (Cards)
+            updateDashboard(dados.resumo);
+
+            // 4. Renderiza Lista
+            listContainer.innerHTML = '';
+
+            if (!dados.lista || dados.lista.length === 0) {
+                listContainer.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">Nenhuma transação encontrada.</p>';
+                return;
+            }
+
+            dados.lista.forEach(t => {
+                // Mapeamento de Tipos do Backend ('E' ou 'S') para Classes CSS
+                const isEntry = t.tipo === 'E';
+                const dotClass = isEntry ? 'dot-green' : 'dot-red';
+                const valClass = isEntry ? 'val-green' : 'val-red';
+                const sign = isEntry ? '+ ' : '- ';
+
+                const row = document.createElement('div');
+                row.className = 'fluxo-item-row';
+                row.innerHTML = `
+                    <div class="col-type"><span class="indicator-dot ${dotClass}"></span></div>
+                    <div class="col-date">${t.data_hora}</div>
+                    <div class="col-nf">${t.nf}</div>
+                    <div class="col-origin">${t.origem || '-'}</div>
+                    <div class="col-value ${valClass}">${sign}R$ ${formatMoney(t.valor)}</div>
+                    <div class="col-details">
+                        <button class="btn-details" onclick="window.openDetails('${t.nf}', '${t.tipo}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                `;
+                listContainer.appendChild(row);
+            });
+
+        } catch (error) {
+            console.error(error);
+            listContainer.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar fluxo.</p>';
         }
-
-        filtered.forEach(t => {
-            const isEntry = t.type === 'in';
-            const dotClass = isEntry ? 'dot-green' : 'dot-red';
-            const valClass = isEntry ? 'val-green' : 'val-red';
-            const sign = isEntry ? '+ ' : '- ';
-
-            const row = document.createElement('div');
-            row.className = 'fluxo-item-row';
-            row.innerHTML = `
-                <div class="col-type"><span class="indicator-dot ${dotClass}"></span></div>
-                <div class="col-date">${t.date}</div>
-                <div class="col-nf">${t.nf}</div>
-                <div class="col-origin">${t.origin}</div>
-                <div class="col-value ${valClass}">${sign}R$ ${formatMoney(t.value)}</div>
-                <div class="col-details">
-                    <button class="btn-details" onclick="openDetails(${t.id})"><i class="fas fa-eye"></i></button>
-                </div>
-            `;
-            listContainer.appendChild(row);
-        });
     };
 
-    // --- 4. MODAL DE DETALHES ---
+    const updateDashboard = (resumo) => {
+        if (!resumo) return;
+
+        document.getElementById('dash-total-in').innerText = `R$ ${formatMoney(resumo.total_entradas)}`;
+        document.getElementById('dash-total-out').innerText = `R$ ${formatMoney(resumo.total_saidas)}`;
+        
+        const lucroEl = document.getElementById('dash-profit');
+        lucroEl.innerText = `R$ ${formatMoney(resumo.lucro)}`;
+
+        // Cor do lucro
+        if (resumo.lucro < 0) {
+            lucroEl.parentElement.classList.remove('green');
+            lucroEl.parentElement.classList.add('red');
+        } else {
+            lucroEl.parentElement.classList.remove('red');
+            lucroEl.parentElement.classList.add('green');
+        }
+    };
+
+    // --- MODAL DE DETALHES ---
     const detailsOverlay = document.getElementById('overlay-details');
     const btnClose = document.getElementById('btn-close-details');
 
-    // Função Global para onclick
-    window.openDetails = (id) => {
-        const t = transactions.find(x => x.id === id);
-        if(!t) return;
+    window.openDetails = async (nf, tipo) => {
+        const detalhe = await window.App.getDetalhesFluxo(nf, tipo);
+        
+        if (!detalhe) {
+            showToast("Detalhes não encontrados", "error");
+            return;
+        }
 
-        const isEntry = t.type === 'in';
+        const isEntry = tipo === 'E';
 
         // Título
         document.getElementById('modal-title').innerText = isEntry ? 
-            'DETALHES DA TRANSAÇÃO (ENTRADA)' : 'DETALHES DA TRANSAÇÃO (SAÍDA)';
+            'DETALHES DA VENDA (ENTRADA)' : 'DETALHES DA COMPRA (SAÍDA)';
 
-        // Campos Comuns
-        document.getElementById('det-nf').value = t.nf;
-        document.getElementById('det-date').value = t.date;
-        document.getElementById('det-total-value').innerText = `R$ ${formatMoney(t.value)}`;
-        document.getElementById('det-items').value = t.items;
+        // Preenche Campos
+        document.getElementById('det-nf').value = detalhe.nf;
+        document.getElementById('det-date').value = detalhe.data_hora;
+        document.getElementById('det-total-value').innerText = `R$ ${formatMoney(detalhe.valor_total)}`;
+        
+        // Formata lista de itens
+        let itemsText = "";
+        if (detalhe.itens && detalhe.itens.length > 0) {
+            itemsText = detalhe.itens.map(i => 
+                `${i.produto} (x${i.qtd}) - R$ ${formatMoney(i.preco)} un.`
+            ).join('\n');
+        } else {
+            itemsText = "Nenhum item registrado.";
+        }
+        document.getElementById('det-items').value = itemsText;
 
-        // Lógica de Campos Específicos
+        // Lógica de Campos Específicos (Entrada vs Saída)
         const rowPayment = document.getElementById('row-payment');
         const labelOrigin = document.getElementById('label-origin-type');
         const supplierFields = document.getElementById('supplier-extra-fields');
 
         if (isEntry) {
-            // Configuração de Entrada
+            // Venda ao Cliente
             rowPayment.classList.remove('hidden');
-            document.getElementById('det-payment').value = t.payment;
+            document.getElementById('det-payment').value = detalhe.forma_pagamento || '-';
             
-            labelOrigin.innerText = 'ORIGEM';
-            document.getElementById('det-origin-name').value = t.origin;
+            labelOrigin.innerText = 'CLIENTE (ORIGEM)';
+            // Se o backend retornar o nome do cliente na "origem", usamos
+            // Se for venda anônima, pode vir "Venda ao Cliente" ou NULL
+            document.getElementById('det-origin-name').value = detalhe.origem || "Cliente não identificado";
             
             supplierFields.classList.add('hidden');
         } else {
-            // Configuração de Saída
+            // Compra de Fornecedor
             rowPayment.classList.add('hidden');
             
-            labelOrigin.innerText = 'ORIGEM (FORNECEDOR)';
-            document.getElementById('det-origin-name').value = t.origin;
+            labelOrigin.innerText = 'FORNECEDOR';
+            document.getElementById('det-origin-name').value = detalhe.origem || "Fornecedor";
             
-            // Preenche extras
-            supplierFields.classList.remove('hidden');
-            document.getElementById('det-cnpj').value = t.cnpj || '';
-            document.getElementById('det-email').value = t.email || '';
-            document.getElementById('det-phone').value = t.phone || '';
+            // Se o endpoint de detalhes retornasse CNPJ/Email, preencheríamos aqui.
+            // Pelo código atual do backend (fluxoDB.py), ele retorna apenas 'origem' (nome)
+            // e não os detalhes de contato. Vou ocultar os extras para não ficarem vazios.
+            supplierFields.classList.add('hidden'); 
         }
 
         detailsOverlay.classList.remove('hidden');
     };
 
-    btnClose.addEventListener('click', () => {
-        detailsOverlay.classList.add('hidden');
+    if (btnClose) {
+        btnClose.addEventListener('click', () => detailsOverlay.classList.add('hidden'));
+    }
+
+    // --- EVENTOS DE FILTRO ---
+    document.getElementById('btn-filter-fluxo').addEventListener('click', renderFluxo);
+    
+    // Opcional: Atualizar ao mudar datas ou pressionar Enter nos inputs
+    document.querySelectorAll('.filter-input').forEach(input => {
+        input.addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') renderFluxo();
+        });
     });
 
-    // --- 5. EVENTOS DE FILTRO ---
-    document.getElementById('btn-filter-fluxo').addEventListener('click', renderList);
-    
     // Inicialização
-    updateDashboard();
-    renderList();
-
+    renderFluxo();
 });

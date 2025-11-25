@@ -116,15 +116,33 @@ window.App = {
         }
     },
 
-    // Produtos
+    // --- PRODUTOS (Foco da correção) ---
+
     getProdutos: async (filtros = {}) => {
-        // Converte objeto de filtros em query string: ?nome=abc&codigo=123
         const query = new URLSearchParams(filtros).toString();
         const res = await apiRequest(`/produtos?${query}`, 'GET');
         return res.ok ? await res.json() : [];
     },
+
+    // Busca dados para o Modal de Edição
+    getProdutoPorCodigo: async (codigo) => {
+        // Rota no backend: @produtos_blueprint.route("/produtos/<int:codigo>")
+        const res = await apiRequest(`/produtos/${codigo}`, 'GET');
+        return res.ok ? await res.json() : null;
+    },
+
     criarProduto: async (dados) => {
         return await apiRequest('/produtos', 'POST', dados);
+    },
+
+    atualizarProduto: async (codigo, dados) => {
+        // Rota no backend: PUT /produtos/<int:codigo>
+        return await apiRequest(`/produtos/${codigo}`, 'PUT', dados);
+    },
+
+    deletarProduto: async (codigo) => {
+        // Rota no backend: DELETE /produtos/<int:codigo>
+        return await apiRequest(`/produtos/${codigo}`, 'DELETE');
     },
 
     // Clientes
@@ -143,24 +161,93 @@ window.App = {
         return await apiRequest('/clientes', 'DELETE', { cpf: cpf });
     },
 
-    // Funcionários
+    // --- FUNCIONÁRIOS (Correções aqui) ---
+	
+	// --- FUNCIONÁRIOS (INTEGRAÇÃO NOVA) ---
     getFuncionarios: async (filtros = {}) => {
+        // Converte objeto { nome: '...', turno: '...' } para query string
         const query = new URLSearchParams(filtros).toString();
         const res = await apiRequest(`/funcionarios?${query}`, 'GET');
         return res.ok ? await res.json() : [];
     },
+    
+    // Busca dados completos de um único funcionário para edição
+    getFuncionarioPorCpf: async (cpf) => {
+        const res = await apiRequest(`/funcionarios/consultar?cpf=${cpf}`, 'GET');
+        return res.ok ? await res.json() : null;
+    },
+
     criarFuncionario: async (dados) => {
         return await apiRequest('/funcionarios', 'POST', dados);
     },
 
-    // Fornecedores
+    atualizarFuncionario: async (dados) => {
+        // O backend espera um PUT com json contendo o 'cpf' original
+        return await apiRequest('/funcionarios', 'PUT', dados);
+    },
+
+    deletarFuncionario: async (cpf) => {
+        return await apiRequest('/funcionarios', 'DELETE', { cpf: cpf });
+    },
+	
+	// --- FLUXO (FINANCEIRO) ---
+    
+    getFluxo: async (filtros = {}) => {
+        // O Backend espera datas no formato DD/MM/YYYY
+        // Se vier YYYY-MM-DD do input type="date", convertemos
+        if (filtros.min && filtros.min.includes('-')) {
+            const [y, m, d] = filtros.min.split('-');
+            filtros.min = `${d}/${m}/${y}`;
+        }
+        if (filtros.max && filtros.max.includes('-')) {
+            const [y, m, d] = filtros.max.split('-');
+            filtros.max = `${d}/${m}/${y}`;
+        }
+
+        const query = new URLSearchParams(filtros).toString();
+        const res = await apiRequest(`/fluxo?${query}`, 'GET');
+        
+        // O Backend retorna { lista: [], resumo: { total_entradas, total_saidas, lucro } }
+        return res.ok ? await res.json() : { lista: [], resumo: { total_entradas:0, total_saidas:0, lucro:0 } };
+    },
+
+    getDetalhesFluxo: async (nf, tipo) => {
+        // Rota: /fluxo/detalhes/<nf>?tipo=E (ou S)
+        const res = await apiRequest(`/fluxo/detalhes/${nf}?tipo=${tipo}`, 'GET');
+        return res.ok ? await res.json() : null;
+    },
+
+    // --- FORNECEDORES (INTEGRAÇÃO) ---
     getFornecedores: async (filtros = {}) => {
         const query = new URLSearchParams(filtros).toString();
         const res = await apiRequest(`/fornecedores?${query}`, 'GET');
         return res.ok ? await res.json() : [];
     },
+
+    // Busca dados para o Modal de Edição
+    getFornecedorPorCnpj: async (cnpj) => {
+        // Rota: GET /fornecedores/consultar?cnpj=...
+        const res = await apiRequest(`/fornecedores/consultar?cnpj=${cnpj}`, 'GET');
+        return res.ok ? await res.json() : null;
+    },
+
+    // Busca produtos para o Modal "Olho"
+    getProdutosFornecedor: async (cnpj) => {
+        // Rota: GET /fornecedores/produtos?cnpj=...
+        const res = await apiRequest(`/fornecedores/produtos?cnpj=${cnpj}`, 'GET');
+        return res.ok ? await res.json() : [];
+    },
+
     criarFornecedor: async (dados) => {
         return await apiRequest('/fornecedores', 'POST', dados);
+    },
+
+    atualizarFornecedor: async (dados) => {
+        return await apiRequest('/fornecedores', 'PUT', dados);
+    },
+
+    deletarFornecedor: async (cnpj) => {
+        return await apiRequest('/fornecedores', 'DELETE', { cnpj: cnpj });
     },
 
     // Caixa (Operações Stateful no Backend)

@@ -1,95 +1,104 @@
-// scripts/fornecedores.js
+// frontend/scripts/fornecedores.js
 
 document.addEventListener('DOMContentLoaded', () => {
     
     const supplierList = document.getElementById('supplier-list');
     if (!supplierList) return;
 
-    // Referências Globais
-    let suppliers = window.App.suppliers;
-    const { showToast, saveSuppliers } = window.App;
-    let purchases = window.App.purchases || [];
+    const { showToast } = window.App;
+    let currentCnpjEdit = null;
 
-    // --- Renderização da Lista ---
-    const renderSuppliers = () => {
-        supplierList.innerHTML = '';
+    // --- RENDERIZAÇÃO ---
+    const renderSuppliers = async () => {
+        supplierList.innerHTML = '<p style="text-align:center; padding:20px;">Carregando fornecedores...</p>';
 
         // Filtros
-        const nameFilter = document.getElementById('filter-sup-name')?.value.toLowerCase() || '';
+        const nameFilter = document.getElementById('filter-sup-name')?.value || '';
         const cnpjFilter = document.getElementById('filter-sup-cnpj')?.value || '';
 
-        const filtered = suppliers.filter(s => {
-            const matchName = s.name.toLowerCase().includes(nameFilter);
-            const matchCnpj = s.cnpj.includes(cnpjFilter);
-            return matchName && matchCnpj;
-        });
+        const filtros = {
+            nome: nameFilter,
+            cnpj: cnpjFilter
+        };
 
-        filtered.forEach(s => {
-            const row = document.createElement('div');
-            row.className = 'stock-item-row';
-            row.innerHTML = `
-                <div class="stock-field-group sup-col-name">
-                    <label>Nome</label>
-                    <input type="text" value="${s.name}" readonly class="stock-input">
-                </div>
-                <div class="stock-field-group sup-col-cnpj">
-                    <label>CNPJ</label>
-                    <input type="text" value="${s.cnpj}" readonly class="stock-input">
-                </div>
-                <div class="stock-field-group sup-col-email">
-                    <label>E-mail</label>
-                    <input type="text" value="${s.email}" readonly class="stock-input">
-                </div>
-                
-                <div class="sup-col-btn" style="display:flex; gap:5px; justify-content: flex-end;">
-                    <button class="btn-edit-stock" style="background-color: #555;" onclick="openSupplierDetails(${s.id})">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn-edit-stock" onclick="openEditSupplierModal(${s.id})">
-                        <i class="fas fa-pen"></i>
-                    </button>
-                </div>
-            `;
-            supplierList.appendChild(row);
-        });
+        try {
+            const suppliers = await window.App.getFornecedores(filtros);
+            
+            supplierList.innerHTML = '';
 
-        if (filtered.length === 0) {
-            supplierList.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">Nenhum fornecedor encontrado.</p>';
+            if (!suppliers || suppliers.length === 0) {
+                supplierList.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">Nenhum fornecedor encontrado.</p>';
+                return;
+            }
+
+            suppliers.forEach(s => {
+                const row = document.createElement('div');
+                row.className = 'stock-item-row';
+                row.innerHTML = `
+                    <div class="stock-field-group sup-col-name">
+                        <label>Nome</label>
+                        <input type="text" value="${s.nome}" readonly class="stock-input">
+                    </div>
+                    <div class="stock-field-group sup-col-cnpj">
+                        <label>CNPJ</label>
+                        <input type="text" value="${s.cnpj}" readonly class="stock-input">
+                    </div>
+                    <div class="stock-field-group sup-col-email">
+                        <label>E-mail</label>
+                        <input type="text" value="${s.email || '-'}" readonly class="stock-input">
+                    </div>
+                    
+                    <div class="sup-col-btn" style="display:flex; gap:5px; justify-content: flex-end;">
+                        <button class="btn-edit-stock" style="background-color: #555;" onclick="window.openSupplierDetails('${s.cnpj}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-edit-stock" onclick="window.openEditSupplierModal('${s.cnpj}')">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                    </div>
+                `;
+                supplierList.appendChild(row);
+            });
+
+        } catch (error) {
+            console.error(error);
+            supplierList.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar dados.</p>';
         }
     };
 
     document.getElementById('btn-filter-trigger')?.addEventListener('click', renderSuppliers);
     document.querySelectorAll('.filter-input').forEach(input => {
-        input.addEventListener('input', renderSuppliers);
+        input.addEventListener('change', renderSuppliers);
     });
     renderSuppliers();
     
-    // --- Detalhes Fornecedor (Produtos) ---
-    window.openSupplierDetails = (id) => {
-        const s = suppliers.find(x => x.id === id);
-        if(!s) return;
-        document.getElementById('det-sup-name').value = s.name;
+    // --- DETALHES (PRODUTOS DO FORNECEDOR) ---
+    window.openSupplierDetails = async (cnpj) => {
+        // Primeiro buscamos o nome do fornecedor (seja da lista ou via api, aqui vamos via api pra garantir)
+        const fornecedor = await window.App.getFornecedorPorCnpj(cnpj);
+        if (!fornecedor) return;
+
+        document.getElementById('det-sup-name').value = fornecedor.nome;
         
-        const list = document.getElementById('det-sup-products');
-        list.innerHTML = '';
+        const listBox = document.getElementById('det-sup-products');
+        listBox.innerHTML = '<p style="padding:10px;">Carregando produtos...</p>';
+        document.getElementById('overlay-sup-details').classList.remove('hidden');
+
+        // Busca produtos
+        const produtos = await window.App.getProdutosFornecedor(cnpj);
         
-        // Filtra compras feitas com este CNPJ (ou nome)
-        const supplied = purchases.filter(p => p.supplierCnpj === s.cnpj || p.supplierName === s.name);
-        
-        if (supplied.length > 0) {
-            // Remove duplicatas de produtos visualmente
-            const uniqueProducts = [...new Set(supplied.map(item => item.productName))];
-            uniqueProducts.forEach(prod => {
-                list.innerHTML += `<div class="modal-list-item"><i class="fas fa-box"></i> ${prod}</div>`;
+        listBox.innerHTML = '';
+        if (produtos && produtos.length > 0) {
+            produtos.forEach(prod => {
+                // Backend retorna {codigo, nome}
+                listBox.innerHTML += `<div class="modal-list-item"><i class="fas fa-box"></i> ${prod.nome}</div>`;
             });
         } else {
-            list.innerHTML = '<div class="modal-list-item" style="color:#777;">Nenhum produto registrado em compras recentes.</div>';
+            listBox.innerHTML = '<div class="modal-list-item" style="color:#777;">Nenhum produto vinculado a este fornecedor.</div>';
         }
-        
-        document.getElementById('overlay-sup-details').classList.remove('hidden');
     };
 
-    // --- Registrar Fornecedor ---
+    // --- REGISTRO ---
     const btnOpen = document.getElementById('btn-abrir-form-sup');
     const btnCancel = document.getElementById('btn-cancel-sup-reg');
     const viewDef = document.getElementById('sup-default-view');
@@ -104,96 +113,104 @@ document.addEventListener('DOMContentLoaded', () => {
         const cnpj = document.getElementById('reg-sup-cnpj').value;
         const name = document.getElementById('reg-sup-name').value;
         const email = document.getElementById('reg-sup-email').value;
-        
-        if(cnpj && name && email) btnConfirm.disabled = false;
-        else btnConfirm.disabled = true;
+        if(btnConfirm) btnConfirm.disabled = !(cnpj && name && email);
     };
 
     if(formReg) {
         formReg.addEventListener('input', validateForm);
-        formReg.addEventListener('submit', (e) => {
+        formReg.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const cnpj = document.getElementById('reg-sup-cnpj').value;
-            const name = document.getElementById('reg-sup-name').value;
-            const email = document.getElementById('reg-sup-email').value;
-
-            const newSupplier = {
-                id: Date.now(),
-                cnpj: cnpj,
-                name: name,
-                email: email
+            
+            const novoFornecedor = {
+                cnpj: document.getElementById('reg-sup-cnpj').value,
+                nome: document.getElementById('reg-sup-name').value,
+                email: document.getElementById('reg-sup-email').value
             };
 
-            suppliers.push(newSupplier);
-            saveSuppliers();
-            renderSuppliers();
-            showToast('Fornecedor inserido com sucesso!');
-            formReg.reset();
-            viewForm.classList.add('hidden');
-            viewDef.classList.remove('hidden');
+            const res = await window.App.criarFornecedor(novoFornecedor);
+
+            if (res.ok) {
+                showToast('Fornecedor cadastrado!');
+                formReg.reset();
+                viewForm.classList.add('hidden');
+                viewDef.classList.remove('hidden');
+                renderSuppliers();
+            } else {
+                const err = await res.json();
+                alert(err.erro || "Erro ao cadastrar");
+            }
         });
     }
 
-    // --- Editar Fornecedor ---
+    // --- EDIÇÃO ---
     const editOverlay = document.getElementById('overlay-sup-edit');
     const editForm = document.getElementById('form-sup-edit');
-    let currentId = null;
 
-    window.openEditSupplierModal = (id) => {
-        const s = suppliers.find(x => x.id === id);
-        if(!s) return;
-        currentId = id;
+    window.openEditSupplierModal = async (cnpj) => {
+        const s = await window.App.getFornecedorPorCnpj(cnpj);
+        if(!s) {
+            showToast("Erro ao buscar fornecedor", "error");
+            return;
+        }
+        
+        currentCnpjEdit = cnpj;
 
         document.getElementById('edit-sup-cnpj').value = s.cnpj;
-        document.getElementById('edit-sup-name').value = s.name;
+        document.getElementById('edit-sup-name').value = s.nome;
         document.getElementById('edit-sup-email').value = s.email;
 
         editOverlay.classList.remove('hidden');
     };
 
-    document.getElementById('btn-cancel-sup-edit').addEventListener('click', () => editOverlay.classList.add('hidden'));
+    document.getElementById('btn-cancel-sup-edit')?.addEventListener('click', () => editOverlay.classList.add('hidden'));
 
-    editForm?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const idx = suppliers.findIndex(x => x.id === currentId);
-        if (idx > -1) {
-            suppliers[idx].name = document.getElementById('edit-sup-name').value;
-            suppliers[idx].email = document.getElementById('edit-sup-email').value;
+    if(editForm) {
+        editForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
             
-            saveSuppliers();
-            renderSuppliers();
-            showToast('Fornecedor editado com sucesso!');
-            editOverlay.classList.add('hidden');
-        }
-    });
+            const dadosUpdate = {
+                cnpj: currentCnpjEdit, // Necessário para o WHERE
+                nome: document.getElementById('edit-sup-name').value,
+                email: document.getElementById('edit-sup-email').value
+            };
 
-    // --- Deletar Fornecedor ---
+            const res = await window.App.atualizarFornecedor(dadosUpdate);
+            
+            if(res.ok) {
+                showToast('Fornecedor atualizado!');
+                editOverlay.classList.add('hidden');
+                renderSuppliers();
+            } else {
+                const err = await res.json();
+                alert(err.erro || "Erro ao atualizar");
+            }
+        });
+    }
+
+    // --- DELETAR ---
     const btnDeleteInit = document.getElementById('btn-sup-delete-init');
     const deleteOverlay = document.getElementById('overlay-delete');
-    const btnConfirmDelete = document.getElementById('btn-confirm-delete');
     const btnCancelDelete = document.getElementById('btn-cancel-delete');
+    const btnConfirmDelete = document.getElementById('btn-confirm-delete');
 
-    btnDeleteInit?.addEventListener('click', () => {
-        deleteOverlay.classList.remove('hidden');
-    });
+    btnDeleteInit?.addEventListener('click', () => deleteOverlay.classList.remove('hidden'));
+    btnCancelDelete?.addEventListener('click', () => deleteOverlay.classList.add('hidden'));
 
-    btnCancelDelete?.addEventListener('click', () => {
-        deleteOverlay.classList.add('hidden');
-    });
-
+    // Hack para limpar listeners
     const newBtnConfirm = btnConfirmDelete.cloneNode(true);
     btnConfirmDelete.parentNode.replaceChild(newBtnConfirm, btnConfirmDelete);
 
-    newBtnConfirm.addEventListener('click', () => {
-        if (currentId) {
-            const idx = suppliers.findIndex(s => s.id === currentId);
-            if(idx > -1) {
-                suppliers.splice(idx, 1);
-                saveSuppliers();
-                renderSuppliers();
-                showToast('Fornecedor removido com sucesso!');
+    newBtnConfirm.addEventListener('click', async () => {
+        if (currentCnpjEdit) {
+            const res = await window.App.deletarFornecedor(currentCnpjEdit);
+            if(res.ok) {
+                showToast('Fornecedor removido!');
                 editOverlay.classList.add('hidden');
                 deleteOverlay.classList.add('hidden');
+                renderSuppliers();
+            } else {
+                const err = await res.json();
+                alert(err.erro || "Erro ao deletar");
             }
         }
     });

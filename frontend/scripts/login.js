@@ -88,13 +88,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Monta o objeto conforme esperado pelo backend (rotas/funcionarios.py)
+            // CORREÇÃO AQUI: A chave deve ser 'cpf' e não 'cpf_funcionario' para a rota de criação
             const novoFuncionario = {
-                cpf_funcionario: cpf,
+                cpf: cpf, 
                 nome: nome,
                 salario: salario,
                 turno: turno,
                 cargo: cargo,
-                data_nascimento: `${dia}/${mes}/${ano}`, // Formato DD/MM/YYYY
+                data_nascimento: `${dia}/${mes}/${ano}`, // DD/MM/YYYY
                 cpf_supervisor: supervisor
             };
 
