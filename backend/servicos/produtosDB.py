@@ -113,6 +113,7 @@ class produtosDB:
         preco = self._limpar_moeda(dados.get("preco"))
         promocao = int(dados.get("promocao", 0))
         estoque = int(dados.get("estoque"))
+        limite = int(dados.get("limite_inferior", 10))
         
         con = self.db.conn
         cursor = con.cursor()
@@ -124,7 +125,8 @@ class produtosDB:
                     Preco = {preco}, 
                     Categoria = '{categoria}', 
                     Promocao = {promocao},
-                    Estoque = {estoque}
+                    Estoque = {estoque},
+                    Limite_inferior = {limite}
                 WHERE Codigo = {codigo}
             """
             cursor.execute(query)
