@@ -1,34 +1,37 @@
-CREATE SCHEMA SUPERMERCADO;
+﻿CREATE SCHEMA SUPERMERCADO;
+SET search_path TO SUPERMERCADO;
 
+
+-- Tabela Produto
 CREATE TABLE Produto (
-    Codigo VARCHAR(13) PRIMARY KEY,
+    Codigo SERIAL PRIMARY KEY,
     Nome VARCHAR(100) NOT NULL,
     Preco DECIMAL(10, 2) NOT NULL,
     Estoque INT NOT NULL DEFAULT 0,
+    Limite_inferior INT NOT NULL DEFAULT 0,
     Categoria VARCHAR(50),
-    Promocao VARCHAR(50)
+    Promocao INT NOT NULL DEFAULT 0 CHECK (Promocao >= 0),
+    Ativo BOOLEAN DEFAULT TRUE
 );
 
+
+-- Tabela Fornecedor
 CREATE TABLE Fornecedor (
     CNPJ VARCHAR(18) PRIMARY KEY,
     Nome VARCHAR(100) NOT NULL,
     Email VARCHAR(100)
 );
 
+
+-- Tabela Cliente
 CREATE TABLE Cliente (
     CPF VARCHAR(14) PRIMARY KEY,
     Nome VARCHAR(100) NOT NULL,
     Data_Nascimento DATE
 );
 
-CREATE TABLE Venda (
-    NF VARCHAR(44) PRIMARY KEY,
-    Data_Hora TIMESTAMP NOT NULL,
-    Preco DECIMAL(10, 2) NOT NULL,
-    CNPJ_Fornecedor VARCHAR(18),
-    FOREIGN KEY (CNPJ_Fornecedor) REFERENCES Fornecedor(CNPJ)
-);
 
+-- Tabela Funcionario
 CREATE TABLE Funcionario (
     CPF VARCHAR(14) PRIMARY KEY,
     Nome VARCHAR(100) NOT NULL,
@@ -37,264 +40,423 @@ CREATE TABLE Funcionario (
     Data_Nascimento DATE,
     Cargo VARCHAR(50),
     CPF_Supervisor VARCHAR(14),
-    FOREIGN KEY (CPF_Supervisor) REFERENCES Funcionario(CPF)
+    FOREIGN KEY (CPF_Supervisor) REFERENCES Funcionario(CPF) ON DELETE SET NULL
 );
 
-CREATE TABLE Compra (
-    NF VARCHAR(44) PRIMARY KEY,
+
+-- Tabela Venda_Fornecedor (Nota Fiscal de Entrada)
+CREATE TABLE Venda_Fornecedor (
+    NF BIGSERIAL PRIMARY KEY,
+    Data_Hora TIMESTAMP NOT NULL,
+    Preco DECIMAL(10, 2) NOT NULL,
+    CNPJ_Fornecedor VARCHAR(18),
+    FOREIGN KEY (CNPJ_Fornecedor) REFERENCES Fornecedor(CNPJ) ON DELETE SET NULL
+);
+
+
+-- Tabela Compra_Cliente (Nota Fiscal de Saída)
+CREATE TABLE Compra_Cliente (
+    NF BIGSERIAL PRIMARY KEY,
     Valor_Total DECIMAL(10, 2) NOT NULL,
     Forma_Pagamento VARCHAR(50),
     Data_Hora TIMESTAMP NOT NULL,
-    Cargo VARCHAR(50),
     CPF_Cliente VARCHAR(14),
     CPF_Funcionario VARCHAR(14),
-    FOREIGN KEY (CPF_Cliente) REFERENCES Cliente(CPF),
-    FOREIGN KEY (CPF_Funcionario) REFERENCES Funcionario(CPF)
+    FOREIGN KEY (CPF_Cliente) REFERENCES Cliente(CPF) ON DELETE SET NULL,
+    FOREIGN KEY (CPF_Funcionario) REFERENCES Funcionario(CPF) ON DELETE SET NULL
 );
 
+
+-- Configura NF de compras de cliente para começar em 1 TRILHÃO
+ALTER SEQUENCE compra_cliente_nf_seq RESTART WITH 1000000000000;
+
+
+-- Tabela Inclui (Produtos incluídos na NF de Venda do Fornecedor)
 CREATE TABLE Inclui(
-    NF_Venda VARCHAR(44),
-    Codigo_Produto VARCHAR(13),
+    NF_Venda_Fornecedor BIGINT,
+    Codigo_Produto INTEGER DEFAULT 0,
     Quantidade INT NOT NULL,
-    Preço_Venda DECIMAL (10, 2) NOT NULL,
-    PRIMARY KEY (NF_Venda, Codigo_Produto),
-    FOREIGN KEY (NF_Venda) REFERENCES Venda(NF),
-    FOREIGN KEY (Codigo_Produto) REFERENCES Produto(Codigo)
+    Preco_Venda_Fornecedor DECIMAL (10, 2) NOT NULL,
+    PRIMARY KEY (NF_Venda_Fornecedor, Codigo_Produto),
+    FOREIGN KEY (NF_Venda_Fornecedor) REFERENCES Venda_Fornecedor(NF),
+    FOREIGN KEY (Codigo_Produto) REFERENCES Produto(Codigo) ON DELETE SET DEFAULT
 );
 
 
+-- Tabela Abarca (Produtos incluídos na NF de Compra do Cliente)
 CREATE TABLE Abarca(
-    NF_Compra VARCHAR(44),
-    Codigo_Produto VARCHAR(13),
+    NF_Compra_Cliente BIGINT,
+    Codigo_Produto INTEGER DEFAULT 0,
     Quantidade INT NOT NULL,
-    PRIMARY KEY (NF_Compra,Codigo_Produto),
-    FOREIGN KEY (NF_Compra) REFERENCES Compra(NF),
-    FOREIGN KEY (Codigo_Produto) REFERENCES Produto(Codigo)
+    PRIMARY KEY (NF_Compra_Cliente,Codigo_Produto),
+    FOREIGN KEY (NF_Compra_Cliente) REFERENCES Compra_Cliente(NF),
+    FOREIGN KEY (Codigo_Produto) REFERENCES Produto(Codigo) ON DELETE SET DEFAULT
 );
 
 
+-- Tabela Fornece (Relação entre qual fornecedor fornece qual produto)
 CREATE TABLE Fornece(
     CNPJ_Fornecedor VARCHAR(18),
-    Codigo_Produto VARCHAR(13),
+    Codigo_Produto INTEGER,
     PRIMARY KEY (CNPJ_Fornecedor, Codigo_Produto),
-    FOREIGN KEY (CNPJ_Fornecedor) REFERENCES Fornecedor(CNPJ),
-    FOREIGN KEY (Codigo_Produto) REFERENCES Produto(Codigo)
+    FOREIGN KEY (CNPJ_Fornecedor) REFERENCES Fornecedor(CNPJ) ON DELETE CASCADE,
+    FOREIGN KEY (Codigo_Produto) REFERENCES Produto(Codigo) ON DELETE CASCADE
 );
 
 
+-- Tabela TELEFONE_Fornecedor
 CREATE TABLE TELEFONE_Fornecedor (
     CNPJ VARCHAR(18),
     Numero VARCHAR(20),
     tipo VARCHAR(20),
     PRIMARY KEY (CNPJ, Numero),
-    FOREIGN KEY (CNPJ) REFERENCES Fornecedor (CNPJ)
+    CONSTRAINT fk_telefone_fornecedor FOREIGN KEY (CNPJ) REFERENCES Fornecedor (CNPJ) ON DELETE CASCADE
 );
 
 
+-- Tabela TELEFONE_Cliente
 CREATE TABLE TELEFONE_Cliente (
-    CPF VARCHAR(14),
+    cpf_cliente VARCHAR(14),
     Numero VARCHAR(20),
     tipo VARCHAR(20),
-    PRIMARY KEY (CPF, Numero),
-    FOREIGN KEY (CPF) REFERENCES Cliente(CPF)
+    PRIMARY KEY (cpf_cliente, Numero),
+    CONSTRAINT fk_cliente_telefone FOREIGN KEY (cpf_cliente) REFERENCES Cliente (cpf) ON DELETE CASCADE
 );
 
--- Inserindo Tuplas
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES
-('111.111.111-11', 'Ana Silva', '1985-10-20'),
-('222.222.222-22', 'Bruno Souza', '1992-05-15'),
-('555.555.555-55', 'Carla Mendes', '1998-03-25');
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES ('777.777.777-77', 'Fernanda Lima', '1995-01-15');
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES ('888.888.888-88', 'Gabriel Rocha', '1980-07-22');
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES ('999.999.999-99', 'Helena Costa', '2001-04-03');
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES ('000.000.000-00', 'Igor Santos', '1973-11-11');
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES ('123.456.789-01', 'Juliana Alves', '1990-08-30');
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES ('109.876.543-21', 'Kevin Mendes', '1982-02-28');
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES ('200.000.000-02', 'Lia Ferreira', '1993-10-10');
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES ('300.000.000-03', 'Marco Oliveira', '1965-12-05');
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES ('400.000.000-04', 'Nina Pereira', '2005-01-28');
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES ('500.000.000-05', 'Otávio Gomes', '1987-04-12');
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES ('600.000.000-06', 'Patrícia Rios', '1970-06-03');
-INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES ('700.000.000-07', 'Ricardo Costa', '1999-09-19');
 
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES
-('111.111.111-11', '98765-4321', 'Celular'),
-('222.222.222-22', '3210-9876', 'Residencial'),
-('555.555.555-55', '99999-0000', 'Trabalho');
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES ('777.777.777-77', '99111-2222', 'Celular');
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES ('888.888.888-88', '3344-5566', 'Residencial');
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES ('999.999.999-99', '98888-7777', 'Celular');
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES ('000.000.000-00', '3211-0987', 'Comercial');
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES ('123.456.789-01', '97777-6666', 'Celular');
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES ('109.876.543-21', '3000-1111', 'Residencial');
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES ('200.000.000-02', '99333-4444', 'Celular');
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES ('300.000.000-03', '3555-6666', 'Residencial');
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES ('400.000.000-04', '98111-0000', 'Celular');
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES ('500.000.000-05', '3777-8888', 'Comercial');
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES ('600.000.000-06', '96543-2100', 'Celular');
-INSERT INTO TELEFONE_Cliente (CPF, Numero, tipo) VALUES ('700.000.000-07', '3456-7890', 'Residencial');
+-- ====================================================================================
+-- INSERÇÕES DE DADOS (GARANTINDO O MÍNIMO DE 25 TUPLAS POR TABELA)
+-- ====================================================================================
 
+
+-- PRODUTOS (25 tuplas - OK)
+INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Limite_inferior, Categoria) VALUES
+(0, 'PRODUTO DESCONTINUADO', 0.00, 0, 0, 'SISTEMA'); -- Código 0 obrigatório
+
+
+INSERT INTO Produto (Nome, Preco, Estoque, Limite_inferior, Categoria) VALUES
+('Arroz Tio João 5kg', 28.90, 100, 20, 'Mercearia'), -- Codigo 1
+('Feijão Carioca Camil 1kg', 8.50, 150, 30, 'Mercearia'), -- Codigo 2
+('Açúcar Refinado União 1kg', 4.20, 80, 10, 'Mercearia'), -- Codigo 3
+('Óleo de Soja Liza 900ml', 7.50, 100, 20, 'Mercearia'), -- Codigo 4
+('Macarrão Espaguete Adria', 3.80, 90, 15, 'Massas'), -- Codigo 5
+('Molho de Tomate Pomarola', 2.50, 120, 20, 'Mercearia'), -- Codigo 6
+('Sal Refinado Cisne 1kg', 2.00, 50, 10, 'Mercearia'), -- Codigo 7
+('Café Pilão 500g', 16.90, 60, 10, 'Mercearia'), -- Codigo 8
+('Leite Integral Parmalat', 5.20, 60, 12, 'Laticínios'), -- Codigo 9
+('Manteiga Aviação 200g', 12.90, 30, 5, 'Laticínios'), -- Codigo 10
+('Iogurte Grego Vigor', 3.50, 50, 10, 'Laticínios'), -- Codigo 11
+('Requeijão Vigor', 8.90, 40, 5, 'Laticínios'), -- Codigo 12
+('Coca-Cola 2L', 9.00, 60, 12, 'Bebidas'), -- Codigo 13
+('Guaraná Antarctica 2L', 7.50, 60, 12, 'Bebidas'), -- Codigo 14
+('Suco Del Valle Uva', 6.90, 40, 10, 'Bebidas'), -- Codigo 15
+('Cerveja Heineken Lata', 4.50, 200, 48, 'Bebidas'), -- Codigo 16
+('Sabão em Pó OMO 1kg', 18.90, 40, 10, 'Limpeza'), -- Codigo 17
+('Detergente Ypê', 2.20, 100, 20, 'Limpeza'), -- Codigo 18
+('Água Sanitária Cândida', 3.90, 50, 10, 'Limpeza'), -- Codigo 19
+('Papel Higiênico Neve 12un', 18.90, 60, 15, 'Higiene'), -- Codigo 20
+('Shampoo Seda', 9.90, 30, 5, 'Higiene'), -- Codigo 21
+('Picanha Bovina Maturada Kg', 89.90, 15, 5, 'Açougue'), -- Codigo 22
+('Frango Inteiro Congelado Kg', 12.90, 30, 10, 'Açougue'), -- Codigo 23
+('Banana Prata Kg', 5.90, 50, 10, 'Hortifruti'); -- Codigo 24
+
+
+-- FORNECEDORES (25 tuplas - OK)
 INSERT INTO Fornecedor (CNPJ, Nome, Email) VALUES
-('00.000.000/0001-01', 'Alimentos Naturais S.A.', 'contato@alimentosnat.com'),\
-('11.111.111/0001-11', 'Produtos de Limpeza Ltda', 'vendas@limpalimpa.com'),
-('22.222.222/0001-22', 'Laticínios da Serra', 'laticinios@serra.com');
-INSERT INTO Fornecedor (CNPJ, Nome, Email) VALUES ('33.333.333/0001-33', 'Padaria Pão Quente', 'contato@paoquente.com');
-INSERT INTO Fornecedor (CNPJ, Nome, Email) VALUES ('44.444.444/0001-44', 'Hortifruti Fresco', 'vendas@fresco.com');
-INSERT INTO Fornecedor (CNPJ, Nome, Email) VALUES ('55.555.555/0001-55', 'Bebidas Geladas S.A.', 'vendas@bebidasgeladas.com');
-INSERT INTO Fornecedor (CNPJ, Nome, Email) VALUES ('66.666.666/0001-66', 'Congelados Top', 'atendimento@congeladostop.com');
-INSERT INTO Fornecedor (CNPJ, Nome, Email) VALUES ('77.777.777/0001-77', 'Carnes Nobres do Sul', 'contato@carnesnobres.com');
-INSERT INTO Fornecedor (CNPJ, Nome, Email) VALUES ('88.888.888/0001-88', 'Grãos e Cia', 'vendas@graosecia.com');
-INSERT INTO Fornecedor (CNPJ, Nome, Email) VALUES ('99.999.999/0001-99', 'Material Escolar', 'vendas@escolar.com');
-INSERT INTO Fornecedor (CNPJ, Nome, Email) VALUES ('10.000.000/0001-10', 'Doces Finos', 'contato@docesfinos.com');
+('11.111.111/0001-11', 'Distribuidora Alimentos SP', 'vendas@alimentossp.com'),
+('22.222.222/0001-22', 'Ambev Distribuição', 'pedidos@ambev.com'),
+('33.333.333/0001-33', 'Unilever Brasil', 'sac@unilever.com'),
+('44.444.444/0001-44', 'Frigorífico Boi Gordo', 'vendas@boigordo.com'),
+('55.555.555/0001-55', 'Ceasa Hortifruti', 'contato@ceasa.com'),
+('66.666.666/0001-66', 'Laticínios Leve Mais', 'vendas@levemais.com'),
+('77.777.777/0001-77', 'Distribuidora de Congelados Ice', 'pedidos@ice.com.br'),
+('88.888.888/0001-88', 'Limpeza Total S.A.', 'contato@limpezatotal.com'),
+('99.999.999/0001-99', 'Pães Frescos Padaria', 'contato@paesfrescos.com.br'),
+('10.101.010/0001-01', 'Embalagens Plásticas Forte', 'vendas@plasticaforte.com'),
+('12.345.678/0001-90', 'Bebidas Refrescantes Ltda', 'comercial@refrescantes.com'),
+('13.579.246/0001-00', 'Massas Italianas Delicato', 'vendas@delicato.com'),
+('14.701.369/0001-11', 'Grãos do Campo Exportadora', 'export@graosdocampo.com'),
+('15.924.813/0001-22', 'Carnes Nobres Prime', 'prime@carnesnobres.com'),
+('16.035.792/0001-33', 'Mercearia Global Distribuidora', 'contato@globaldist.com'),
+('17.146.903/0001-44', 'Produtos de Higiene Suave', 'suave@higiene.com'),
+('18.257.014/0001-55', 'Sorvetes Gelatto', 'pedidos@gelatto.com'),
+('19.368.125/0001-66', 'Chocolates Doces Sonhos', 'vendas@docessonhos.com'),
+('20.479.236/0001-77', 'Temperos Naturais Gourmet', 'gourmet@temperos.com'),
+('21.580.347/0001-88', 'Azeites Especiais Mediterrâneo', 'med@azeites.com'),
+('23.456.789/0001-01', 'Suculentas Frutas Tropicais', 'frutrop@contato.com'),
+('24.680.135/0001-22', 'Congelados Marítimos', 'vendas@maritimos.com'),
+('25.802.469/0001-44', 'Cafeteria Aroma Forte', 'aroma@cafeteria.com'),
+('27.024.691/0001-66', 'Especiarias do Mundo', 'mundo@especiarias.com'),
+('28.246.913/0001-88', 'Licores Finos Importadora', 'vendas@licoresfinos.com');
 
+
+
+
+-- FUNCIONÁRIOS (25 tuplas - OK)
+-- Gerente
+INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES
+('999.999.999-00', 'Carlos Almeida', 'Integral', 5500.00, '1980-03-10', 'Gerente', NULL);
+-- Supervisores (3)
+INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES
+('888.888.888-00', 'Sandra Lima', 'Integral', 3500.00, '1985-05-15', 'Supervisor', '999.999.999-00'),
+('777.777.777-00', 'Patrícia Rocha', 'Integral', 3500.00, '1989-01-20', 'Supervisor', '999.999.999-00'),
+('666.666.666-00', 'Ricardo Gomes', 'Integral', 3500.00, '1992-11-05', 'Supervisor', '999.999.999-00');
+-- Equipe (21)
+INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES
+('111.111.111-11', 'Ana Souza', 'Manhã', 1800.00, '1998-07-25', 'Caixa', '888.888.888-00'),
+('222.222.222-22', 'Bruno Ferreira', 'Tarde', 1800.00, '1995-12-12', 'Caixa', '888.888.888-00'),
+('333.333.333-33', 'Carla Mendes', 'Noite', 1800.00, '2000-01-20', 'Caixa', '888.888.888-00'),
+('444.444.444-44', 'Daniel Barbosa', 'Manhã', 1600.00, '2002-05-15', 'Repositor', '888.888.888-00'),
+('555.555.555-55', 'Eduardo Santos', 'Tarde', 2200.00, '1990-08-08', 'Açougueiro', '888.888.888-00'),
+('100.000.000-01', 'Mariana Neves', 'Manhã', 1800.00, '2001-03-17', 'Caixa', '888.888.888-00'),
+('100.000.000-02', 'Felipe Santos', 'Tarde', 1800.00, '1997-09-02', 'Caixa', '888.888.888-00'),
+('100.000.000-03', 'Giovana Costa', 'Noite', 1800.00, '1999-06-19', 'Caixa', '888.888.888-00'),
+('100.000.000-04', 'Henrique Dias', 'Manhã', 1600.00, '2003-04-22', 'Repositor', '777.777.777-00'),
+('100.000.000-05', 'Isabela Viana', 'Tarde', 1600.00, '2004-08-10', 'Repositor', '777.777.777-00'),
+('100.000.000-06', 'Júlio Prado', 'Noite', 1600.00, '1994-12-01', 'Repositor', '777.777.777-00'),
+('100.000.000-07', 'Kátia Ribeiro', 'Manhã', 2000.00, '1991-02-28', 'Atendente', '666.666.666-00'),
+('100.000.000-08', 'Lucas Mello', 'Tarde', 2000.00, '1986-05-03', 'Atendente', '666.666.666-00'),
+('100.000.000-09', 'Natália Pires', 'Manhã', 1800.00, '2000-10-14', 'Caixa', '888.888.888-00'),
+('100.000.000-10', 'Otávio Rocha', 'Tarde', 1800.00, '1998-07-07', 'Caixa', '777.777.777-00'),
+('100.000.000-11', 'Priscila Alves', 'Noite', 1800.00, '1996-04-18', 'Caixa', '666.666.666-00'),
+('100.000.000-12', 'Queiroz Silva', 'Manhã', 1600.00, '2005-01-25', 'Repositor', '888.888.888-00'),
+('100.000.000-13', 'Rafaela Castro', 'Tarde', 1600.00, '2001-08-11', 'Repositor', '777.777.777-00'),
+('100.000.000-14', 'Sérgio Torres', 'Noite', 1600.00, '1993-03-29', 'Repositor', '666.666.666-00'),
+('100.000.000-15', 'Talita Xavier', 'Tarde', 2200.00, '1990-11-17', 'Padeiro', '888.888.888-00'),
+('100.000.000-16', 'Ulisses Vaz', 'Manhã', 2200.00, '1985-06-06', 'Açougueiro', '777.777.777-00');
+
+
+
+
+-- CLIENTES (25 tuplas - OK)
+INSERT INTO Cliente (CPF, Nome, Data_Nascimento) VALUES
+('123.456.789-00', 'João da Silva', '1990-05-15'),
+('111.222.333-44', 'Maria Oliveira', '1985-10-20'),
+('555.666.777-88', 'Pedro Souza', '2000-01-01'),
+('999.888.777-66', 'Lucas Pereira', '1995-03-12'),
+('222.333.444-55', 'Fernanda Lima', '1988-07-08'),
+('333.444.555-66', 'Roberto Costa', '1975-12-25'),
+('444.555.666-77', 'Juliana Alves', '1992-09-09'),
+('777.888.999-00', 'Marcos Santos', '1982-04-30'),
+('121.212.121-21', 'Camila Rocha', '1999-11-11'),
+('343.434.343-43', 'Paulo Mendes', '1960-06-20'),
+('565.656.565-65', 'Larissa Dias', '2001-02-14'),
+('787.878.787-87', 'Gustavo Farias', '1993-08-05'),
+('909.090.909-09', 'Renata Nunes', '1987-10-10'),
+('101.010.101-01', 'Felipe Castro', '1996-01-22'),
+('202.020.202-02', 'Beatriz Lobo', '1990-12-03'),
+('505.050.505-05', 'Aline Ferreira', '1983-04-01'),
+('505.050.505-06', 'Thiago Moreira', '1970-07-30'),
+('505.050.505-07', 'Viviane Rocha', '1994-02-28'),
+('505.050.505-08', 'Alexandre Silva', '1965-09-19'),
+('505.050.505-09', 'Bruna Zanetti', '2005-12-12'),
+('505.050.505-10', 'César Oliveira', '1979-03-03'),
+('505.050.505-11', 'Diana Lopes', '1981-11-21'),
+('505.050.505-12', 'Elias Pires', '1997-01-08'),
+('505.050.505-13', 'Gisele Nunes', '1968-05-27'),
+('505.050.505-14', 'Heitor Almeida', '1990-10-10');
+
+
+
+
+-- TELEFONE_FORNECEDOR (25 tuplas - OK)
 INSERT INTO TELEFONE_Fornecedor (CNPJ, Numero, tipo) VALUES
-('00.000.000/0001-01', '11 5555-1234', 'Comercial'),
-('11.111.111/0001-11', '21 9999-5678', 'Celular'),
-('22.222.222/0001-22', '31 8888-7777', 'Comercial');
-INSERT INTO TELEFONE_Fornecedor (CNPJ, Numero, tipo) VALUES ('33.333.333/0001-33', '61 2222-3333', 'Comercial');
-INSERT INTO TELEFONE_Fornecedor (CNPJ, Numero, tipo) VALUES ('44.444.444/0001-44', '62 4444-5555', 'Comercial');
-INSERT INTO TELEFONE_Fornecedor (CNPJ, Numero, tipo) VALUES ('55.555.555/0001-55', '63 6666-7777', 'Vendas');
-INSERT INTO TELEFONE_Fornecedor (CNPJ, Numero, tipo) VALUES ('66.666.666/0001-66', '64 8888-9999', 'Comercial');
-INSERT INTO TELEFONE_Fornecedor (CNPJ, Numero, tipo) VALUES ('77.777.777/0001-77', '51 1111-2222', 'Comercial');
-INSERT INTO TELEFONE_Fornecedor (CNPJ, Numero, tipo) VALUES ('88.888.888/0001-88', '52 3333-4444', 'Comercial');
-INSERT INTO TELEFONE_Fornecedor (CNPJ, Numero, tipo) VALUES ('99.999.999/0001-99', '53 5555-6666', 'Vendas');
-INSERT INTO TELEFONE_Fornecedor (CNPJ, Numero, tipo) VALUES ('10.000.000/0001-10', '54 7777-8888', 'Comercial');
+('11.111.111/0001-11', '(11) 4004-0000', 'Comercial'),
+('22.222.222/0001-22', '0800 777 7777', 'SAC'),
+('33.333.333/0001-33', '(11) 5555-1001', 'Atendimento'),
+('44.444.444/0001-44', '(11) 5555-1002', 'Comercial'),
+('55.555.555/0001-55', '(11) 5555-1003', 'Central'),
+('66.666.666/0001-66', '(11) 5555-1004', 'Vendas'),
+('77.777.777/0001-77', '(11) 5555-1005', 'Financeiro'),
+('88.888.888/0001-88', '(11) 5555-1006', 'SAC'),
+('99.999.999/0001-99', '(11) 5555-1007', 'Comercial'),
+('10.101.010/0001-01', '(11) 5555-1008', 'Vendas'),
+('12.345.678/0001-90', '(11) 5555-1009', 'Comercial'),
+('13.579.246/0001-00', '(11) 5555-1010', 'Atendimento'),
+('14.701.369/0001-11', '(11) 5555-1011', 'Comercial'),
+('15.924.813/0001-22', '(11) 5555-1012', 'Vendas'),
+('16.035.792/0001-33', '(11) 5555-1013', 'SAC'),
+('17.146.903/0001-44', '(11) 5555-1014', 'Comercial'),
+('18.257.014/0001-55', '(11) 5555-1015', 'Vendas'),
+('19.368.125/0001-66', '(11) 5555-1016', 'Atendimento'),
+('20.479.236/0001-77', '(11) 5555-1017', 'Comercial'),
+('21.580.347/0001-88', '(11) 5555-1018', 'Vendas'),
+('23.456.789/0001-01', '(11) 5555-1019', 'SAC'),
+('24.680.135/0001-22', '(11) 5555-1020', 'Comercial'),
+('25.802.469/0001-44', '(11) 5555-1021', 'Vendas'),
+('27.024.691/0001-66', '(11) 5555-1022', 'Atendimento'),
+('28.246.913/0001-88', '(11) 5555-1023', 'Comercial');
 
-INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES
-('333.333.333-33', 'Carlos Gerente', 'Integral', 20000.00, '1975-01-01', 'Gerente', NULL),
-('696.969.696-96', 'Lucas Giovani', 'Integral', 50000.00, '2005-12-06', 'Gerente', NULL);
 
-INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES
-('444.444.444-44', 'Diana Vendedora', 'Manhã', 1518.00, '2000-11-20', 'Operador de Caixa', '696.969.696-96'),
-('666.666.666-66', 'Eduardo Repositor', 'Tarde', 1518.00, '1988-12-10', 'Repositor', '333.333.333-33');
-INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES ('777.777.777-77', 'Sofia Cozinheira', 'Integral', 1518.00, '1990-09-09', 'Cozinheira', '333.333.333-33');
-INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES ('888.888.888-88', 'Thiago Açougueiro', 'Manhã', 1518.00, '1985-06-18', 'Açougueiro', '333.333.333-33');
-INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES ('999.999.999-99', 'Ursula Caixa', 'Tarde', 1518.00, '2002-05-07', 'Operador de Caixa', '696.969.696-96');
-INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES ('000.000.000-00', 'Victor Segurança', 'Noite', 1518.00, '1978-03-01', 'Segurança', '333.333.333-33');
-INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES ('101.010.101-01', 'Wilma Estoquista', 'Integral', 1518.00, '1991-03-20', 'Estoquista', '696.969.696-96');
-INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES ('202.020.202-02', 'Xavier Repositor', 'Manhã', 1518.00, '1989-11-29', 'Repositor', '333.333.333-33');
-INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES ('303.030.303-03', 'Yara Gerente', 'Integral', 1518.00, '1970-08-05', 'Gerente Adjunto', '696.969.696-96');
-INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor) VALUES ('404.040.404-04', 'Zeca Entregador', 'Tarde', 1518.00, '2004-01-01', 'Entregador', '333.333.333-33');
 
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES
-('7890001000101', 'Arroz Agulhinha 5kg', 25.50, 150, 'Grãos', NULL),
-('7890002000202', 'Detergente Limpa Fácil', 4.99, 300, 'Limpeza', 'Leve 3 Pague 2'),
-('7890003000303', 'Chocolate ao Leite 100g', 8.00, 50, 'Doces', NULL),
-('7890004000404', 'Queijo Minas Frescal', 18.90, 80, 'Laticínios', NULL),
-('7890005000505', 'Refrigerante Cola 2L', 7.50, 200, 'Bebidas', 'Oferta do dia');
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890006000606', 'Pão Francês', 0.80, 500, 'Padaria', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890007000707', 'Banana Prata KG', 7.50, 100, 'Hortifruti', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890008000808', 'Água Mineral 500ml', 2.00, 400, 'Bebidas', 'Compre 5 Leve 6');
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890009000909', 'Lasanha Congelada', 15.99, 60, 'Congelados', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890010001010', 'Sabão em Pó 1kg', 12.50, 120, 'Limpeza', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890011001111', 'Leite Integral 1L', 5.99, 180, 'Laticínios', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890012001212', 'Biscoito Maizena', 3.49, 250, 'Biscoitos', '3 por R$10');
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890013001313', 'Café 500g', 10.99, 90, 'Matinais', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890014001414', 'Frango Congelado KG', 18.00, 70, 'Carnes', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890015001515', 'Manteiga 200g', 8.90, 110, 'Laticínios', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890016001616', 'Picanha Maturada KG', 65.00, 40, 'Carnes', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890017001717', 'Feijão Preto 1kg', 8.90, 150, 'Grãos', '3 por R$25');
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890018001818', 'Caderno Universitário', 15.00, 70, 'Papelaria', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890019001919', 'Torta Holandesa', 35.00, 20, 'Doces', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890020002020', 'Azeite Extra Virgem', 28.50, 90, 'Mercearia', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890021002121', 'Iogurte Natural', 4.50, 200, 'Laticínios', 'Compre 4 Pague 3');
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890022002222', 'Molho de Tomate', 2.99, 300, 'Mercearia', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890023002323', 'Cerveja Lata', 3.80, 500, 'Bebidas', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890024002424', 'Desinfetante 1L', 6.90, 150, 'Limpeza', NULL);
-INSERT INTO Produto (Codigo, Nome, Preco, Estoque, Categoria, Promocao) VALUES ('7890025002525', 'Pão de Queijo Cong.', 11.90, 80, 'Congelados', NULL);
 
+-- TELEFONE_CLIENTE (25 tuplas - OK)
+INSERT INTO TELEFONE_Cliente (cpf_cliente, Numero, tipo) VALUES
+('123.456.789-00', '(11) 99999-1111', 'Celular'),
+('111.222.333-44', '(11) 3333-2222', 'Residencial'),
+('555.666.777-88', '(11) 98888-7777', 'Celular'),
+('222.333.444-55', '(21) 91234-5678', 'Celular'),
+('999.888.777-66', '(21) 98765-4321', 'Celular'),
+('333.444.555-66', '(31) 91111-2222', 'Celular'),
+('444.555.666-77', '(31) 3333-4444', 'Residencial'),
+('777.888.999-00', '(41) 95555-6666', 'Celular'),
+('121.212.121-21', '(41) 7777-8888', 'Comercial'),
+('343.434.343-43', '(51) 99876-5432', 'Celular'),
+('565.656.565-65', '(51) 91234-9876', 'Celular'),
+('787.878.787-87', '(61) 99090-0909', 'Celular'),
+('909.090.909-09', '(61) 98765-1234', 'Celular'),
+('101.010.101-01', '(71) 91212-3434', 'Celular'),
+('202.020.202-02', '(71) 95656-7878', 'Celular'),
+('505.050.505-05', '(81) 99000-0001', 'Celular'),
+('505.050.505-06', '(81) 99000-0002', 'Celular'),
+('505.050.505-07', '(83) 99000-0003', 'Celular'),
+('505.050.505-08', '(83) 99000-0004', 'Residencial'),
+('505.050.505-09', '(91) 99000-0005', 'Celular'),
+('505.050.505-10', '(91) 99000-0006', 'Celular'),
+('505.050.505-11', '(92) 99000-0007', 'Celular'),
+('505.050.505-12', '(92) 99000-0008', 'Celular'),
+('505.050.505-13', '(95) 99000-0009', 'Celular'),
+('505.050.505-14', '(95) 99000-0010', 'Celular');
+
+
+
+
+-- VENDA_FORNECEDOR (25 tuplas - OK)
+INSERT INTO Venda_Fornecedor (Data_Hora, Preco, CNPJ_Fornecedor) VALUES
+(CURRENT_TIMESTAMP - INTERVAL '20 days', 5000.00, '11.111.111/0001-11'), -- NF 1
+(CURRENT_TIMESTAMP - INTERVAL '19 days', 1200.50, '66.666.666/0001-66'), -- NF 6
+(CURRENT_TIMESTAMP - INTERVAL '18 days', 3500.00, '77.777.777/0001-77'), -- NF 7
+(CURRENT_TIMESTAMP - INTERVAL '17 days', 800.00, '88.888.888/0001-88'),  -- NF 8
+(CURRENT_TIMESTAMP - INTERVAL '16 days', 4200.00, '99.999.999/0001-99'), -- NF 9
+(CURRENT_TIMESTAMP - INTERVAL '15 days', 2500.00, '22.222.222/0001-22'), -- NF 2
+(CURRENT_TIMESTAMP - INTERVAL '14 days', 1500.00, '10.101.010/0001-01'), -- NF 10
+(CURRENT_TIMESTAMP - INTERVAL '13 days', 2800.00, '12.345.678/0001-90'), -- NF 11
+(CURRENT_TIMESTAMP - INTERVAL '12 days', 950.00, '13.579.246/0001-00'),  -- NF 12
+(CURRENT_TIMESTAMP - INTERVAL '11 days', 5200.00, '14.701.369/0001-11'), -- NF 13
+(CURRENT_TIMESTAMP - INTERVAL '10 days', 1800.00, '33.333.333/0001-33'), -- NF 3
+(CURRENT_TIMESTAMP - INTERVAL '9 days', 1800.00, '15.924.813/0001-22'),  -- NF 14
+(CURRENT_TIMESTAMP - INTERVAL '8 days', 700.00, '16.035.792/0001-33'),   -- NF 15
+(CURRENT_TIMESTAMP - INTERVAL '7 days', 3000.00, '17.146.903/0001-44'), -- NF 16
+(CURRENT_TIMESTAMP - INTERVAL '6 days', 1400.00, '18.257.014/0001-55'), -- NF 17
+(CURRENT_TIMESTAMP - INTERVAL '5 days', 3000.00, '44.444.444/0001-44'),  -- NF 4
+(CURRENT_TIMESTAMP - INTERVAL '4 days', 450.00, '19.368.125/0001-66'),   -- NF 18
+(CURRENT_TIMESTAMP - INTERVAL '3 days', 6000.00, '20.479.236/0001-77'), -- NF 19
+(CURRENT_TIMESTAMP - INTERVAL '2 days', 800.00, '55.555.555/0001-55'),   -- NF 5
+(CURRENT_TIMESTAMP - INTERVAL '2 days', 2100.00, '21.580.347/0001-88'), -- NF 20
+(CURRENT_TIMESTAMP - INTERVAL '1 day', 1100.00, '23.456.789/0001-01'),  -- NF 21
+(CURRENT_TIMESTAMP - INTERVAL '1 hour', 3300.00, '24.680.135/0001-22'), -- NF 22
+(CURRENT_TIMESTAMP - INTERVAL '40 minutes', 750.00, '25.802.469/0001-44'), -- NF 23
+(CURRENT_TIMESTAMP - INTERVAL '20 minutes', 900.00, '27.024.691/0001-66'), -- NF 24
+(CURRENT_TIMESTAMP - INTERVAL '5 minutes', 1500.00, '28.246.913/0001-88'); -- NF 25
+
+
+
+
+-- COMPRA_CLIENTE (25 tuplas - OK)
+INSERT INTO Compra_Cliente (Valor_Total, Forma_Pagamento, Data_Hora, CPF_Cliente, CPF_Funcionario) VALUES
+(37.40, 'Dinheiro', CURRENT_TIMESTAMP - INTERVAL '10 days', '123.456.789-00', '111.111.111-11'), -- NF 1000000000000
+(15.90, 'Pix', CURRENT_TIMESTAMP - INTERVAL '10 days', NULL, '111.111.111-11'),                   -- NF 1000000000001
+(150.00,'Crédito', CURRENT_TIMESTAMP - INTERVAL '9 days', '555.666.777-88', '222.222.222-22'),     -- NF 1000000000002
+(200.00,'Débito', CURRENT_TIMESTAMP - INTERVAL '9 days', '999.888.777-66', '222.222.222-22'),      -- NF 1000000000003
+(8.90, 'Dinheiro', CURRENT_TIMESTAMP - INTERVAL '8 days', NULL, '111.111.111-11'),                 -- NF 1000000000004
+(45.50, 'Crédito', CURRENT_TIMESTAMP - INTERVAL '5 days', '222.333.444-55', '333.333.333-33'),     -- NF 1000000000005
+(12.00, 'Pix', CURRENT_TIMESTAMP - INTERVAL '5 days', NULL, '333.333.333-33'),                     -- NF 1000000000006
+(89.90, 'Crédito', CURRENT_TIMESTAMP - INTERVAL '4 days', '777.888.999-00', '111.111.111-11'),     -- NF 1000000000007
+(25.00, 'Débito', CURRENT_TIMESTAMP - INTERVAL '4 days', '121.212.121-21', '222.222.222-22'),      -- NF 1000000000008
+(5.90, 'Dinheiro', CURRENT_TIMESTAMP - INTERVAL '3 days', NULL, '333.333.333-33'),                 -- NF 1000000000009
+(100.00,'Pix', CURRENT_TIMESTAMP - INTERVAL '3 days', '343.434.343-43', '111.111.111-11'),         -- NF 1000000000010
+(30.00, 'Dinheiro', CURRENT_TIMESTAMP - INTERVAL '2 days', NULL, '111.111.111-11'),                -- NF 1000000000011
+(15.50, 'Crédito', CURRENT_TIMESTAMP - INTERVAL '2 days', '565.656.565-65', '222.222.222-22'),     -- NF 1000000000012
+(60.00, 'Débito', CURRENT_TIMESTAMP - INTERVAL '1 day', '787.878.787-87', '333.333.333-33'),       -- NF 1000000000013
+(28.90, 'Dinheiro', CURRENT_TIMESTAMP - INTERVAL '1 day', NULL, '333.333.333-33'),                 -- NF 1000000000014
+(250.00,'Crédito', CURRENT_TIMESTAMP, '909.090.909-09', '111.111.111-11'),                         -- NF 1000000000015
+(12.90, 'Pix', CURRENT_TIMESTAMP, NULL, '111.111.111-11'),                                         -- NF 1000000000016
+(4.50, 'Dinheiro', CURRENT_TIMESTAMP, NULL, '222.222.222-22'),                                     -- NF 1000000000017
+(89.90, 'Crédito', CURRENT_TIMESTAMP, '101.010.101-01', '333.333.333-33'),                         -- NF 1000000000018
+(10.00, 'Débito', CURRENT_TIMESTAMP, '202.020.202-02', '333.333.333-33'),                          -- NF 1000000000019
+(70.00, 'Crédito', CURRENT_TIMESTAMP - INTERVAL '30 minutes', '505.050.505-05', '100.000.000-01'), -- NF 1000000000020
+(14.20, 'Pix', CURRENT_TIMESTAMP - INTERVAL '25 minutes', '505.050.505-06', '100.000.000-02'),     -- NF 1000000000021
+(25.80, 'Débito', CURRENT_TIMESTAMP - INTERVAL '20 minutes', NULL, '100.000.000-03'),               -- NF 1000000000022
+(10.00, 'Dinheiro', CURRENT_TIMESTAMP - INTERVAL '15 minutes', '505.050.505-07', '111.111.111-11'), -- NF 1000000000023
+(45.90, 'Crédito', CURRENT_TIMESTAMP - INTERVAL '10 minutes', '505.050.505-08', '222.222.222-22'); -- NF 1000000000024
+
+
+
+
+-- INCLUI (25 tuplas - OK)
+INSERT INTO Inclui (NF_Venda_Fornecedor, Codigo_Produto, Quantidade, Preco_Venda_Fornecedor) VALUES
+(1, 1, 100, 20.00), (1, 2, 100, 6.00), (1, 4, 100, 5.00),
+(2, 13, 100, 15.00), (2, 16, 200, 3.00),
+(3, 17, 50, 12.00), (3, 18, 50, 1.50),
+(4, 22, 20, 60.00), (4, 23, 30, 8.00),
+(5, 24, 100, 3.00),
+(6, 9, 200, 4.00), (6, 10, 50, 10.00), -- Laticínios
+(7, 23, 100, 9.00), (7, 16, 300, 3.50), -- Congelados e Bebidas
+(8, 17, 100, 13.00), (8, 19, 80, 2.50), -- Limpeza
+(9, 5, 150, 3.00), (9, 3, 100, 3.50),   -- Pães e Massas
+(10, 2, 200, 7.00),                     -- Mercearia
+(11, 13, 150, 16.00),                   -- Bebidas
+(12, 6, 100, 2.00),                     -- Massas/Molho
+(13, 1, 50, 22.00),                     -- Grãos
+(14, 22, 10, 70.00),                    -- Carnes
+(15, 7, 200, 1.50),                     -- Mercearia
+(16, 20, 100, 15.00),                   -- Higiene
+(17, 11, 80, 2.50),                     -- Laticínios
+(18, 12, 60, 7.00),                     -- Laticínios
+(19, 8, 120, 14.00),                    -- Mercearia
+(20, 21, 50, 8.00);                     -- Higiene
+
+
+
+
+-- ABARCA (25 tuplas - OK)
+INSERT INTO Abarca (NF_Compra_Cliente, Codigo_Produto, Quantidade) VALUES
+(1000000000000, 1, 1), (1000000000000, 2, 1),
+(1000000000001, 13, 2),
+(1000000000002, 22, 1), (1000000000002, 16, 2),
+(1000000000003, 1, 5), (1000000000003, 4, 5),
+(1000000000004, 18, 1),
+(1000000000005, 7, 2), (1000000000005, 8, 1),
+(1000000000006, 20, 1),
+(1000000000007, 22, 1),
+(1000000000008, 1, 1),
+(1000000000009, 24, 1),
+(1000000000010, 1, 2), (1000000000010, 2, 2), (1000000000010, 4, 2),
+(1000000000011, 14, 2),
+(1000000000012, 11, 2),
+(1000000000013, 23, 2), (1000000000013, 16, 6),
+(1000000000014, 1, 1),
+(1000000000015, 22, 2), (1000000000015, 16, 12),
+(1000000000016, 10, 1),
+(1000000000017, 16, 1),
+(1000000000018, 22, 1),
+(1000000000019, 13, 1),
+(1000000000020, 22, 1), -- Picanha
+(1000000000021, 3, 2), (1000000000021, 19, 2), -- Açúcar e Água Sanitária
+(1000000000022, 9, 3), (1000000000022, 11, 3), -- Leite e Iogurte
+(1000000000023, 7, 5), -- Sal
+(1000000000024, 17, 2), (1000000000024, 20, 1); -- Sabão em Pó e Papel Higiênico
+
+
+
+
+-- FORNECE (25 tuplas - OK)
 INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES
-('00.000.000/0001-01', '7890001000101'),
-('11.111.111/0001-11', '7890002000202'),
-('00.000.000/0001-01', '7890003000303'),
-('22.222.222/0001-22', '7890004000404'),
-('11.111.111/0001-11', '7890005000505');
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('33.333.333/0001-33', '7890006000606'); -- Pão Francês
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('44.444.444/0001-44', '7890007000707'); -- Banana
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('55.555.555/0001-55', '7890008000808'); -- Água Mineral
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('66.666.666/0001-66', '7890009000909'); -- Lasanha
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('11.111.111/0001-11', '7890010001010'); -- Sabão em Pó
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('22.222.222/0001-22', '7890011001111'); -- Leite Integral
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('00.000.000/0001-01', '7890012001212'); -- Biscoito Maizena
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('00.000.000/0001-01', '7890013001313'); -- Café
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('66.666.666/0001-66', '7890014001414'); -- Frango Congelado
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('22.222.222/0001-22', '7890015001515'); -- Manteiga
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('77.777.777/0001-77', '7890016001616'); -- Picanha
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('88.888.888/0001-88', '7890017001717'); -- Feijão
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('99.999.999/0001-99', '7890018001818'); -- Caderno
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('10.000.000/0001-10', '7890019001919'); -- Torta Holandesa
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('00.000.000/0001-01', '7890020002020'); -- Azeite (Alimentos Naturais)
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('22.222.222/0001-22', '7890021002121'); -- Iogurte
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('00.000.000/0001-01', '7890022002222'); -- Molho de Tomate
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('55.555.555/0001-55', '7890023002323'); -- Cerveja (Bebidas Geladas)
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('11.111.111/0001-11', '7890024002424'); -- Desinfetante (Limpeza)
-INSERT INTO Fornece (CNPJ_Fornecedor, Codigo_Produto) VALUES ('66.666.666/0001-66', '7890025002525'); -- Pão de Queijo (Congelados)
-
-INSERT INTO Venda (NF, Data_Hora, Preco, CNPJ_Fornecedor) VALUES
-('44440000000000000000000000000000000000000001', '2025-11-19 10:30:00', 10.00, '00.000.000/0001-01'),
-('44440000000000000000000000000000000000000002', '2025-11-20 12:00:00', 30.00, '22.222.222/0001-22');
-INSERT INTO Venda (NF, Data_Hora, Preco, CNPJ_Fornecedor) VALUES ('44440000000000000000000000000000000000000003', '2025-11-20 15:00:00', 30.00, '55.555.555/0001-55');
-INSERT INTO Venda (NF, Data_Hora, Preco, CNPJ_Fornecedor) VALUES ('44440000000000000000000000000000000000000004', '2025-11-20 16:30:00', 15.99, '66.666.666/0001-66');
-INSERT INTO Venda (NF, Data_Hora, Preco, CNPJ_Fornecedor) VALUES ('44440000000000000000000000000000000000000005', '2025-11-20 17:00:00', 16.00, '33.333.333/0001-33');
-INSERT INTO Venda (NF, Data_Hora, Preco, CNPJ_Fornecedor) VALUES ('44440000000000000000000000000000000000000006', '2025-11-21 09:00:00', 65.00, '77.777.777/0001-77');
-INSERT INTO Venda (NF, Data_Hora, Preco, CNPJ_Fornecedor) VALUES ('44440000000000000000000000000000000000000007', '2025-11-21 10:15:00', 35.00, '10.000.000/0001-10');
-INSERT INTO Venda (NF, Data_Hora, Preco, CNPJ_Fornecedor) VALUES ('44440000000000000000000000000000000000000008', '2025-11-21 11:30:00', 15.00, '99.999.999/0001-99');
-
-INSERT INTO Inclui (NF_Venda, Codigo_Produto, Quantidade, Preço_Venda) VALUES
-('44440000000000000000000000000000000000000001', '7890003000303', 1, 8.00),
-('44440000000000000000000000000000000000000002', '7890004000404', 1, 18.90);
-INSERT INTO Inclui (NF_Venda, Codigo_Produto, Quantidade, Preço_Venda) VALUES ('44440000000000000000000000000000000000000003', '7890008000808', 5, 10.00);
-INSERT INTO Inclui (NF_Venda, Codigo_Produto, Quantidade, Preço_Venda) VALUES ('44440000000000000000000000000000000000000004', '7890009000909', 1, 15.99);
-INSERT INTO Inclui (NF_Venda, Codigo_Produto, Quantidade, Preço_Venda) VALUES ('44440000000000000000000000000000000000000005', '7890006000606', 20, 16.00);
-INSERT INTO Inclui (NF_Venda, Codigo_Produto, Quantidade, Preço_Venda) VALUES ('44440000000000000000000000000000000000000006', '7890016001616', 1, 65.00);
-INSERT INTO Inclui (NF_Venda, Codigo_Produto, Quantidade, Preço_Venda) VALUES ('44440000000000000000000000000000000000000007', '7890019001919', 1, 35.00);
-INSERT INTO Inclui (NF_Venda, Codigo_Produto, Quantidade, Preço_Venda) VALUES ('44440000000000000000000000000000000000000008', '7890018001818', 1, 15.00);
-
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES
-('55550000000000000000000000000000000000000002', 30.49, 'Cartão de Débito', '2025-11-19 11:00:00', 'Operador de Caixa', '111.111.111-11', '444.444.444-44'),
-('55550000000000000000000000000000000000000003', 15.00, 'PIX', '2025-11-20 12:15:00', 'Operador de Caixa', '222.222.222-22', '444.444.444-44');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000004', 35.50, 'Dinheiro', '2025-11-20 13:00:00', 'Operador de Caixa', '777.777.777-77', '444.444.444-44');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000005', 18.00, 'Cartão de Crédito', '2025-11-20 14:00:00', 'Operador de Caixa', '888.888.888-88', '999.999.999-99');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000006', 6.98, 'PIX', '2025-11-20 15:30:00', 'Operador de Caixa', '999.999.999-99', '444.444.444-44');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000007', 20.00, 'Dinheiro', '2025-11-20 16:00:00', 'Operador de Caixa', '000.000.000-00', '999.999.999-99');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000008', 50.00, 'Cartão de Crédito', '2025-11-20 17:30:00', 'Operador de Caixa', '123.456.789-01', '444.444.444-44');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000009', 25.00, 'PIX', '2025-11-20 18:00:00', 'Operador de Caixa', '109.876.543-21', '999.999.999-99');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000010', 12.50, 'Dinheiro', '2025-11-20 19:00:00', 'Operador de Caixa', '777.777.777-77', '444.444.444-44');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000011', 11.98, 'Cartão de Débito', '2025-11-20 20:00:00', 'Operador de Caixa', '888.888.888-88', '999.999.999-99');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000012', 30.00, 'PIX', '2025-11-20 20:30:00', 'Operador de Caixa', '999.999.999-99', '444.444.444-44');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000013', 25.50, 'Dinheiro', '2025-11-20 21:00:00', 'Operador de Caixa', '000.000.000-00', '999.999.999-99');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000014', 28.50, 'PIX', '2025-11-21 12:00:00', 'Operador de Caixa', '200.000.000-02', '999.999.999-99');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000015', 26.70, 'Cartão de Débito', '2025-11-21 13:30:00', 'Operador de Caixa', '300.000.000-03', '444.444.444-44');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000016', 13.50, 'Dinheiro', '2025-11-21 14:00:00', 'Operador de Caixa', '400.000.000-04', '999.999.999-99');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000017', 20.70, 'Cartão de Crédito', '2025-11-21 15:00:00', 'Operador de Caixa', '500.000.000-05', '444.444.444-44');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000018', 35.70, 'PIX', '2025-11-21 16:30:00', 'Operador de Caixa', '600.000.000-06', '999.999.999-99');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000019', 30.00, 'Dinheiro', '2025-11-21 17:00:00', 'Operador de Caixa', '700.000.000-07', '444.444.444-44');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000020', 17.80, 'Cartão de Débito', '2025-11-21 18:30:00', 'Operador de Caixa', '200.000.000-02', '999.999.999-99');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000021', 11.90, 'PIX', '2025-11-21 19:00:00', 'Operador de Caixa', '300.000.000-03', '444.444.444-44');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000022', 17.50, 'Dinheiro', '2025-11-21 20:00:00', 'Operador de Caixa', '400.000.000-04', '999.999.999-99');
-INSERT INTO Compra (NF, Valor_Total, Forma_Pagamento, Data_Hora, Cargo, CPF_Cliente, CPF_Funcionario) VALUES ('55550000000000000000000000000000000000000023', 6.90, 'Cartão de Crédito', '2025-11-21 21:00:00', 'Operador de Caixa', '500.000.000-05', '444.444.444-44');
-
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES
-('55550000000000000000000000000000000000000002', '7890001000101', 1),
-('55550000000000000000000000000000000000000002', '7890002000202', 1),
-('55550000000000000000000000000000000000000003', '7890005000505', 2);
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000004', '7890007000707', 4); -- Banana
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000005', '7890014001414', 1); -- Frango Congelado
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000006', '7890012001212', 2); -- Biscoito Maizena
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000007', '7890008000808', 10); -- Água Mineral (Promoção)
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000008', '7890013001313', 2); -- Café
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000009', '7890011001111', 4); -- Leite Integral
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000010', '7890010001010', 1); -- Sabão em Pó
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000011', '7890015001515', 1); -- Manteiga
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000012', '7890009000909', 1); -- Lasanha Congelada
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000013', '7890001000101', 1); -- Arroz Agulhinha
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000014', '7890020002020', 1); -- Azeite
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000015', '7890017001717', 3); -- Feijão (Promoção)
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000016', '7890022002222', 2); -- Molho de Tomate
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000017', '7890023002323', 5); -- Cerveja Lata
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000018', '7890011001111', 4); -- Leite Integral
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000019', '7890001000101', 1); -- Arroz Agulhinha
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000020', '7890021002121', 4); -- Iogurte Natural (Promoção)
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000021', '7890025002525', 1); -- Pão de Queijo Cong.
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000022', '7890007000707', 2); -- Banana Prata KG
-INSERT INTO Abarca (NF_Compra, Codigo_Produto, Quantidade) VALUES ('55550000000000000000000000000000000000000023', '7890024002424', 1); -- Desinfetante\
+('11.111.111/0001-11', 1), ('11.111.111/0001-11', 2), ('11.111.111/0001-11', 3),
+('22.222.222/0001-22', 13), ('22.222.222/0001-22', 14),
+('33.333.333/0001-33', 17), ('33.333.333/0001-33', 18),
+('44.444.444/0001-44', 22), ('44.444.444/0001-44', 23),
+('55.555.555/0001-55', 24),
+('66.666.666/0001-66', 9), ('66.666.666/0001-66', 10), -- Laticínios Leve Mais
+('77.777.777/0001-77', 5), ('77.777.777/0001-77', 6), -- Massas e Molho
+('88.888.888/0001-88', 19), ('88.888.888/0001-88', 20), -- Limpeza Total
+('99.999.999/0001-99', 3), ('99.999.999/0001-99', 8), -- Pães e Mercearia
+('12.345.678/0001-90', 15), -- Bebidas Refrescantes (Suco)
+('13.579.246/0001-00', 4), -- Massas Delicato (Óleo)
+('15.924.813/0001-22', 22), -- Carnes Nobres Prime (Picanha)
+('17.146.903/0001-44', 21), -- Produtos de Higiene Suave (Shampoo)
+('18.257.014/0001-55', 11), -- Sorvetes Gelatto (Iogurte)
+('19.368.125/0001-66', 12), -- Chocolates (Requeijão, genérico)
+('20.479.236/0001-77', 7); -- Temperos (Sal)
+-- 5 fornecedores restantes são adicionados apenas para atingir a contagem mínima de fornecedores.
+-- Caso seja necessário aumentar a contagem de Fornece, adicione mais associações válidas aqui.
