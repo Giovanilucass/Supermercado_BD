@@ -5,238 +5,267 @@ document.addEventListener('DOMContentLoaded', () => {
     const clientList = document.getElementById('client-list');
     if (!clientList) return;
 
-    // Referências Globais
-    let clients = window.App.clients;
-    const { showToast, saveClients } = window.App;
+    const { showToast } = window.App;
+    
+    // Variável para armazenar dados temporariamente para edição (evita buscar no banco de novo)
+    let loadedClients = [];
 
-    // --- Renderização da Lista ---
-    const renderClients = () => {
-        clientList.innerHTML = '';
+    // --- RENDERIZAÇÃO (Busca no Backend) ---
+    const renderClients = async () => {
+        clientList.innerHTML = '<p style="text-align:center; padding:20px;">Carregando...</p>';
 
-        // Filtros
-        const nameFilter = document.getElementById('filter-cli-name')?.value.toLowerCase() || '';
-        const cpfFilter = document.getElementById('filter-cli-cpf')?.value || '';
-        const yearMin = parseInt(document.getElementById('filter-year-min')?.value) || 0;
-        const yearMax = parseInt(document.getElementById('filter-year-max')?.value) || 9999;
+        // Coleta filtros
+        const filtros = {
+            nome: document.getElementById('filter-cli-name').value,
+            cpf: document.getElementById('filter-cli-cpf').value,
+            min: document.getElementById('filter-year-min').value, // Backend espera 'min'
+            max: document.getElementById('filter-year-max').value  // Backend espera 'max'
+        };
 
-        const filtered = clients.filter(c => {
-            const matchName = c.name.toLowerCase().includes(nameFilter);
-            const matchCpf = c.cpf.includes(cpfFilter);
+        try {
+            // CHAMA O PYTHON!
+            loadedClients = await window.App.getClientes(filtros);
             
-            let matchYear = true;
-            if (c.dob) {
-                const parts = c.dob.split('/'); // DD/MM/YYYY
-                if (parts.length === 3) {
-                    const year = parseInt(parts[2]);
-                    if (year < yearMin || year > yearMax) matchYear = false;
-                }
+            clientList.innerHTML = '';
+            
+            if (loadedClients.length === 0) {
+                clientList.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">Nenhum cliente encontrado no banco de dados.</p>';
+                return;
             }
 
-            return matchName && matchCpf && matchYear;
-        });
+            loadedClients.forEach(c => {
+                const row = document.createElement('div');
+                row.className = 'stock-item-row';
+                row.innerHTML = `
+                    <div class="stock-field-group cli-col-name">
+                        <label>Nome</label>
+                        <input type="text" value="${c.nome}" readonly class="stock-input">
+                    </div>
+                    <div class="stock-field-group cli-col-cpf">
+                        <label>CPF</label>
+                        <input type="text" value="${c.cpf}" readonly class="stock-input">
+                    </div>
+                    <div class="stock-field-group cli-col-dob">
+                        <label>Data de Nascimento</label>
+                        <input type="text" value="${c.data_nascimento || '--'}" readonly class="stock-input">
+                    </div>
+                    
+                    <div class="cli-col-btn" style="display: flex; gap: 5px; justify-content: flex-end;">
+                        <button class="btn-edit-stock" style="background-color: #555;" onclick="openClientDetails('${c.cpf}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="btn-edit-stock" onclick="openEditClientModal('${c.cpf}')">
+                            <i class="fas fa-pen"></i>
+                        </button>
+                    </div>
+                `;
+                clientList.appendChild(row);
+            });
 
-        filtered.forEach(c => {
-            const row = document.createElement('div');
-            row.className = 'stock-item-row';
-            row.innerHTML = `
-                <div class="stock-field-group cli-col-name">
-                    <label>Nome</label>
-                    <input type="text" value="${c.name}" readonly class="stock-input">
-                </div>
-                <div class="stock-field-group cli-col-cpf">
-                    <label>CPF</label>
-                    <input type="text" value="${c.cpf}" readonly class="stock-input">
-                </div>
-                <div class="stock-field-group cli-col-dob">
-                    <label>Data de Nascimento</label>
-                    <input type="text" value="${c.dob || '--/--/----'}" readonly class="stock-input">
-                </div>
-                
-                <div class="cli-col-btn" style="display: flex; gap: 5px; justify-content: flex-end;">
-                    <button class="btn-edit-stock" style="background-color: #555;" onclick="openClientDetails(${c.id})">
-                        <i class="fas fa-eye"></i>
-                    </button>
-                    <button class="btn-edit-stock" onclick="openEditClientModal(${c.id})">
-                        <i class="fas fa-pen"></i>
-                    </button>
-                </div>
-            `;
-            clientList.appendChild(row);
-        });
-
-        if (filtered.length === 0) {
-            clientList.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">Nenhum cliente encontrado.</p>';
+        } catch (error) {
+            console.error(error);
+            clientList.innerHTML = '<p style="text-align:center; color:red;">Erro ao carregar clientes.</p>';
         }
     };
 
-    document.getElementById('btn-filter-trigger')?.addEventListener('click', renderClients);
-    document.querySelectorAll('.filter-input').forEach(input => {
-        input.addEventListener('input', renderClients);
-    });
+    // Listeners de Filtro
+    document.getElementById('btn-filter-trigger').addEventListener('click', renderClients);
+    // Opcional: Buscar ao digitar (pode ficar lento com BD real, melhor deixar só no botão ou com delay)
+    
+    // Carrega ao iniciar
     renderClients();
 
-    // --- Função de Detalhes (Olho) ---
-    window.openClientDetails = (id) => {
-        const c = clients.find(x => x.id === id);
-        if(!c) return;
-        document.getElementById('det-cli-name').value = c.name;
-        document.getElementById('det-cli-cpf').value = c.cpf;
-        
-        const list = document.getElementById('det-cli-phones');
-        list.innerHTML = '';
-        
-        let hasPhone = false;
-        if(c.phone1) {
-            list.innerHTML += `<div class="modal-list-item"><strong>${c.type1 || 'Telefone'}:</strong> ${c.phone1}</div>`;
-            hasPhone = true;
+
+    // --- DETALHES (CONSULTA EXTRA) ---
+    window.openClientDetails = async (cpf) => {
+        // Fazemos uma nova busca específica para pegar os telefones atualizados
+        const res = await fetch(`${API_BASE_URL}/clientes/consultar?cpf=${cpf}`);
+        if(res.ok) {
+            const c = await res.json();
+            
+            document.getElementById('det-cli-name').value = c.nome;
+            document.getElementById('det-cli-cpf').value = c.cpf;
+            
+            const list = document.getElementById('det-cli-phones');
+            list.innerHTML = '';
+            
+            if(c.telefones && c.telefones.length > 0) {
+                c.telefones.forEach(tel => {
+                    list.innerHTML += `<div class="modal-list-item"><strong>${tel.tipo}:</strong> ${tel.numero}</div>`;
+                });
+            } else {
+                list.innerHTML = '<div class="modal-list-item" style="color:#777;">Nenhum telefone cadastrado.</div>';
+            }
+            document.getElementById('overlay-cli-details').classList.remove('hidden');
+        } else {
+            showToast("Erro ao buscar detalhes do cliente.", "error");
         }
-        if(c.phone2) {
-            list.innerHTML += `<div class="modal-list-item"><strong>${c.type2 || 'Telefone'}:</strong> ${c.phone2}</div>`;
-            hasPhone = true;
-        }
-        
-        if(!hasPhone) {
-            list.innerHTML = '<div class="modal-list-item" style="color:#777;">Nenhum telefone cadastrado.</div>';
-        }
-        
-        document.getElementById('overlay-cli-details').classList.remove('hidden');
     };
 
-    // --- Registrar Cliente ---
-    const btnOpen = document.getElementById('btn-abrir-form-cli');
-    const btnCancel = document.getElementById('btn-cancel-cli-reg');
-    const viewDef = document.getElementById('cli-default-view');
-    const viewForm = document.getElementById('cli-form-view');
+
+    // --- REGISTRAR ---
     const formReg = document.getElementById('form-cli-register');
     const btnConfirm = document.getElementById('btn-confirm-cli-reg');
-
-    if(btnOpen) btnOpen.addEventListener('click', () => { viewDef.classList.add('hidden'); viewForm.classList.remove('hidden'); });
-    if(btnCancel) btnCancel.addEventListener('click', () => { viewForm.classList.add('hidden'); viewDef.classList.remove('hidden'); formReg.reset(); });
-
+    
+    // Validação Visual
     const validateForm = () => {
         const cpf = document.getElementById('reg-cli-cpf').value;
         const name = document.getElementById('reg-cli-name').value;
         const dd = document.getElementById('reg-cli-dd').value;
         const mm = document.getElementById('reg-cli-mm').value;
         const yyyy = document.getElementById('reg-cli-yyyy').value;
-        
-        if(cpf && name && dd && mm && yyyy) btnConfirm.disabled = false;
-        else btnConfirm.disabled = true;
+        btnConfirm.disabled = !(cpf && name && dd && mm && yyyy);
     };
 
     if(formReg) {
         formReg.addEventListener('input', validateForm);
-        formReg.addEventListener('submit', (e) => {
+        
+        formReg.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const dd = document.getElementById('reg-cli-dd').value;
-            const mm = document.getElementById('reg-cli-mm').value;
-            const yyyy = document.getElementById('reg-cli-yyyy').value;
+            
+            // Monta objeto igual o Python espera
+            const telefones = [];
+            if(document.getElementById('reg-cli-phone1').value) {
+                telefones.push({ 
+                    numero: document.getElementById('reg-cli-phone1').value, 
+                    tipo: document.getElementById('reg-cli-type1').value 
+                });
+            }
+            if(document.getElementById('reg-cli-phone2').value) {
+                telefones.push({ 
+                    numero: document.getElementById('reg-cli-phone2').value, 
+                    tipo: document.getElementById('reg-cli-type2').value 
+                });
+            }
 
-            const newClient = {
-                id: Date.now(),
+            const dados = {
                 cpf: document.getElementById('reg-cli-cpf').value,
-                name: document.getElementById('reg-cli-name').value,
-                dob: `${dd}/${mm}/${yyyy}`,
-                phone1: document.getElementById('reg-cli-phone1').value,
-                type1: document.getElementById('reg-cli-type1').value,
-                phone2: document.getElementById('reg-cli-phone2').value,
-                type2: document.getElementById('reg-cli-type2').value
+                nome: document.getElementById('reg-cli-name').value,
+                data_nascimento: `${document.getElementById('reg-cli-dd').value}/${document.getElementById('reg-cli-mm').value}/${document.getElementById('reg-cli-yyyy').value}`,
+                telefones: telefones
             };
 
-            clients.push(newClient);
-            saveClients();
-            renderClients();
-            showToast('Cliente inserido com sucesso!');
-            formReg.reset();
-            viewForm.classList.add('hidden');
-            viewDef.classList.remove('hidden');
+            const res = await window.App.criarCliente(dados);
+            
+            if (res.ok) {
+                showToast('Cliente cadastrado com sucesso!');
+                formReg.reset();
+                document.getElementById('cli-form-view').classList.add('hidden');
+                document.getElementById('cli-default-view').classList.remove('hidden');
+                renderClients(); // Recarrega a lista
+            } else {
+                const err = await res.json();
+                alert(err.erro || "Erro ao cadastrar");
+            }
         });
     }
+    
+    // Botões de alternância de view (registro)
+    document.getElementById('btn-abrir-form-cli').addEventListener('click', () => {
+        document.getElementById('cli-default-view').classList.add('hidden');
+        document.getElementById('cli-form-view').classList.remove('hidden');
+    });
+    document.getElementById('btn-cancel-cli-reg').addEventListener('click', () => {
+        document.getElementById('cli-form-view').classList.add('hidden');
+        document.getElementById('cli-default-view').classList.remove('hidden');
+    });
 
-    // --- Editar Cliente ---
+
+    // --- EDITAR ---
     const editOverlay = document.getElementById('overlay-cli-edit');
-    const editForm = document.getElementById('form-cli-edit');
-    let currentId = null;
+    let currentCpfEdit = null;
 
-    window.openEditClientModal = (id) => {
-        const c = clients.find(x => x.id === id);
-        if(!c) return;
-        currentId = id;
+    window.openEditClientModal = async (cpf) => {
+        // Busca dados frescos para edição
+        const res = await fetch(`${API_BASE_URL}/clientes/consultar?cpf=${cpf}`);
+        if(!res.ok) return;
+        
+        const c = await res.json();
+        currentCpfEdit = cpf;
 
         document.getElementById('edit-cli-cpf').value = c.cpf;
-        document.getElementById('edit-cli-name').value = c.name;
-        document.getElementById('edit-cli-phone1').value = c.phone1 || '';
-        document.getElementById('edit-cli-type1').value = c.type1 || 'Celular';
-        document.getElementById('edit-cli-phone2').value = c.phone2 || '';
-        document.getElementById('edit-cli-type2').value = c.type2 || 'Celular';
-
-        if(c.dob) {
-            const [d, m, y] = c.dob.split('/');
+        document.getElementById('edit-cli-name').value = c.nome;
+        
+        // Data
+        if(c.data_nascimento) {
+            // Formato vindo do banco: YYYY-MM-DD (do método get_cliente_por_cpf)
+            const [y, m, d] = c.data_nascimento.split('-');
             document.getElementById('edit-cli-dd').value = d;
             document.getElementById('edit-cli-mm').value = m;
             document.getElementById('edit-cli-yyyy').value = y;
-        } else {
-            document.getElementById('edit-cli-dd').value = '';
-            document.getElementById('edit-cli-mm').value = '';
-            document.getElementById('edit-cli-yyyy').value = '';
+        }
+
+        // Telefones (Preenche os 2 primeiros slots)
+        document.getElementById('edit-cli-phone1').value = '';
+        document.getElementById('edit-cli-phone2').value = '';
+        
+        if(c.telefones && c.telefones[0]) {
+            document.getElementById('edit-cli-phone1').value = c.telefones[0].numero;
+            document.getElementById('edit-cli-type1').value = c.telefones[0].tipo;
+        }
+        if(c.telefones && c.telefones[1]) {
+            document.getElementById('edit-cli-phone2').value = c.telefones[1].numero;
+            document.getElementById('edit-cli-type2').value = c.telefones[1].tipo;
         }
 
         editOverlay.classList.remove('hidden');
     };
 
-    document.getElementById('btn-cancel-cli-edit').addEventListener('click', () => editOverlay.classList.add('hidden'));
-
-    editForm?.addEventListener('submit', (e) => {
+    document.getElementById('form-cli-edit').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const idx = clients.findIndex(x => x.id === currentId);
-        if (idx > -1) {
-            const d = document.getElementById('edit-cli-dd').value;
-            const m = document.getElementById('edit-cli-mm').value;
-            const y = document.getElementById('edit-cli-yyyy').value;
+        
+        const telefones = [];
+        const t1 = document.getElementById('edit-cli-phone1').value;
+        if(t1) telefones.push({ numero: t1, tipo: document.getElementById('edit-cli-type1').value });
+        
+        const t2 = document.getElementById('edit-cli-phone2').value;
+        if(t2) telefones.push({ numero: t2, tipo: document.getElementById('edit-cli-type2').value });
 
-            clients[idx].name = document.getElementById('edit-cli-name').value;
-            clients[idx].dob = `${d}/${m}/${y}`;
-            clients[idx].phone1 = document.getElementById('edit-cli-phone1').value;
-            clients[idx].type1 = document.getElementById('edit-cli-type1').value;
-            clients[idx].phone2 = document.getElementById('edit-cli-phone2').value;
-            clients[idx].type2 = document.getElementById('edit-cli-type2').value;
+        const dados = {
+            cpf: currentCpfEdit, // Necessário para o backend achar quem atualizar
+            nome: document.getElementById('edit-cli-name').value,
+            data_nascimento: `${document.getElementById('edit-cli-dd').value}/${document.getElementById('edit-cli-mm').value}/${document.getElementById('edit-cli-yyyy').value}`,
+            telefones: telefones
+        };
 
-            saveClients();
-            renderClients();
-            showToast('Cliente editado com sucesso!');
+        const res = await window.App.atualizarCliente(dados);
+        if(res.ok) {
+            showToast("Cliente atualizado!");
             editOverlay.classList.add('hidden');
+            renderClients();
+        } else {
+            const err = await res.json();
+            alert(err.erro || "Erro ao atualizar");
         }
     });
+    
+    document.getElementById('btn-cancel-cli-edit').addEventListener('click', () => editOverlay.classList.add('hidden'));
 
-    // --- Deletar Cliente ---
-    const btnDeleteInit = document.getElementById('btn-cli-delete-init');
+
+    // --- DELETAR ---
     const deleteOverlay = document.getElementById('overlay-delete');
-    const btnConfirmDelete = document.getElementById('btn-confirm-delete');
-    const btnCancelDelete = document.getElementById('btn-cancel-delete');
+    
+    document.getElementById('btn-cli-delete-init').addEventListener('click', () => deleteOverlay.classList.remove('hidden'));
+    document.getElementById('btn-cancel-delete').addEventListener('click', () => deleteOverlay.classList.add('hidden'));
+    
+    // Substitui botão de confirmar para remover listeners antigos (clone)
+    const btnConfDel = document.getElementById('btn-confirm-delete');
+    const newBtnConfDel = btnConfDel.cloneNode(true);
+    btnConfDel.parentNode.replaceChild(newBtnConfDel, btnConfDel);
 
-    btnDeleteInit?.addEventListener('click', () => {
-        deleteOverlay.classList.remove('hidden');
-    });
-
-    btnCancelDelete?.addEventListener('click', () => {
-        deleteOverlay.classList.add('hidden');
-    });
-
-    // Clonagem para isolar evento de delete (evitar conflitos)
-    const newBtnConfirm = btnConfirmDelete.cloneNode(true);
-    btnConfirmDelete.parentNode.replaceChild(newBtnConfirm, btnConfirmDelete);
-
-    newBtnConfirm.addEventListener('click', () => {
-        if (currentId) {
-            const idx = clients.findIndex(c => c.id === currentId);
-            if(idx > -1) {
-                clients.splice(idx, 1);
-                saveClients();
+    newBtnConfDel.addEventListener('click', async () => {
+        if(currentCpfEdit) {
+            const res = await window.App.deletarCliente(currentCpfEdit);
+            if(res.ok) {
+                showToast("Cliente removido!");
                 renderClients();
-                showToast('Cliente removido com sucesso!');
-                editOverlay.classList.add('hidden');
                 deleteOverlay.classList.add('hidden');
+                editOverlay.classList.add('hidden');
+            } else {
+                const err = await res.json();
+                alert(err.erro || "Erro ao deletar");
             }
         }
     });
+
 });

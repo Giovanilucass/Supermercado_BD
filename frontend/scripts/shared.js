@@ -1,123 +1,100 @@
 // scripts/shared.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    const headerElement = document.querySelector('.header');
+    // --- VERIFICAÇÃO DE LOGIN (Frontend) ---
+    // Mantemos o localStorage apenas para controle visual de "estou logado"
+    // A segurança real virá da sessão HTTP do backend.
     const userCpf = localStorage.getItem('funcionario_cpf');
     const path = window.location.pathname;
-
-    // Login Guard
     const isLoginPage = path.includes('index.html') || path === '/' || path.endsWith('/');
+
     if (!isLoginPage && !userCpf) {
         window.location.href = 'index.html';
         return;
     }
 
+    // Carregamento do Header
+    const headerElement = document.querySelector('.header');
     if (headerElement) {
         fetch('components/header.html')
             .then(r => r.text())
             .then(html => {
                 headerElement.innerHTML = html;
                 const links = headerElement.querySelectorAll('.nav-link');
-                if (!userCpf) {
-                    links.forEach(l => { l.style.pointerEvents = 'none'; l.style.opacity = '0.5'; l.href = '#'; });
-                } else {
-                    links.forEach(l => {
-                        l.classList.remove('active');
-                        if (path.includes('estoque.html') && !path.includes('reestoque.html') && l.innerText === 'ESTOQUE') l.classList.add('active');
-                        if (path.includes('caixa.html') && l.innerText === 'CAIXA') l.classList.add('active');
-                        if (path.includes('funcionarios.html') && l.innerText === 'FUNCIONÁRIOS') l.classList.add('active');
-                        if (path.includes('fluxo.html') && l.innerText === 'FLUXO') l.classList.add('active');
-                        if (path.includes('clientes.html') && l.innerText === 'CLIENTES') l.classList.add('active');
-                        if (path.includes('fornecedores.html') && l.innerText === 'FORNECEDORES') l.classList.add('active');
-                        if (path.includes('reestoque.html') && l.innerText === 'REESTOCAR') l.classList.add('active');
-                    });
-                }
+                
+                // Define link ativo
+                links.forEach(l => {
+                    l.classList.remove('active');
+                    if (path.includes('estoque.html') && !path.includes('reestoque.html') && l.innerText === 'ESTOQUE') l.classList.add('active');
+                    if (path.includes('caixa.html') && l.innerText === 'CAIXA') l.classList.add('active');
+                    if (path.includes('funcionarios.html') && l.innerText === 'FUNCIONÁRIOS') l.classList.add('active');
+                    if (path.includes('fluxo.html') && l.innerText === 'FLUXO') l.classList.add('active');
+                    if (path.includes('clientes.html') && l.innerText === 'CLIENTES') l.classList.add('active');
+                    if (path.includes('fornecedores.html') && l.innerText === 'FORNECEDORES') l.classList.add('active');
+                    if (path.includes('reestoque.html') && l.innerText === 'REESTOCAR') l.classList.add('active');
+                });
             })
-            .catch(err => console.error("Erro header:", err));
+            .catch(err => console.error("Erro ao carregar header:", err));
     }
 });
 
-// --- DADOS E FUNÇÕES GLOBAIS ---
+// --- CONFIGURAÇÃO DA API ---
 
-const loadData = (key, defaultData) => {
+const API_BASE_URL = "http://127.0.0.1:8000";
+
+/**
+ * Função genérica para chamadas à API
+ * @param {string} endpoint - Ex: "/produtos"
+ * @param {string} method - "GET", "POST", "PUT", "DELETE"
+ * @param {object} body - Dados para enviar (opcional)
+ */
+async function apiRequest(endpoint, method = 'GET', body = null) {
+    const options = {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        credentials: 'include' // IMPORTANTE: Permite enviar cookies de sessão do Flask
+    };
+
+    if (body) {
+        options.body = JSON.stringify(body);
+    }
+
     try {
-        const data = localStorage.getItem(key);
-        if (!data || data === "undefined") return defaultData;
-        return JSON.parse(data);
-    } catch (e) {
-        console.error(`Erro ao carregar ${key}`, e);
-        return defaultData;
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
+        
+        // Tratamento de erro de autenticação (Sessão expirada)
+        if (response.status === 401) {
+            alert("Sessão expirada. Faça login novamente.");
+            localStorage.removeItem('funcionario_cpf');
+            window.location.href = 'index.html';
+            return null;
+        }
+
+        return response;
+    } catch (error) {
+        console.error(`Erro na requisição para ${endpoint}:`, error);
+        window.App.showToast("Erro de conexão com o servidor", "error");
+        throw error;
     }
-};
+}
 
-const saveData = (key, data) => {
-    try {
-        localStorage.setItem(key, JSON.stringify(data));
-    } catch (e) {
-        console.error("Erro ao salvar", e);
-        alert("Erro de armazenamento.");
-    }
-};
-
-// Dados Padrão (COM CAMPOS DE ORDENAÇÃO RESTAURADOS)
-const defaultProducts = [
-    { id: 1, code: '123', name: 'Biscoito Bauducco', price: 5.00, category: 'Alimento', promo: 0, ending: false, qtd: 50, sold: 1200 },
-    { id: 2, code: '456', name: 'Detergente Ypê', price: 2.50, category: 'Limpeza', promo: 10, ending: true, qtd: 5, sold: 850 },
-    { id: 3, code: '789', name: 'Coca-Cola 2L', price: 8.00, category: 'Alimento', promo: 0, ending: false, qtd: 30, sold: 5000 }
-];
-
-const defaultClients = [
-    { id: 1, cpf: '111.222.333-44', name: 'Romário Fenômeno', dob: '29/01/1966', phone1: '(21) 99999-1000', type1: 'Celular' },
-    { id: 2, cpf: '000.000.000-00', name: 'Cliente Teste', dob: '01/01/1990', phone1: '(11) 3333-4444', type1: 'Residencial' }
-];
-
-const defaultEmployees = [
-    { id: 1, cpf: '123.456.789-00', name: 'Fábio Júnior', salary: 2500.00, turno: 'Matutino', cargo: 'Gerente', dob: '10/05/1980', supervisor: '-', salesCount: 15 },
-    { id: 2, cpf: '987.654.321-11', name: 'Ana Maria', salary: 1400.00, turno: 'Vespertino', cargo: 'Caixa', dob: '22/08/1995', supervisor: '123.456.789-00', salesCount: 342 }
-];
-
-const defaultSuppliers = [
-    { id: 1, cnpj: '12.345.678/0001-90', name: 'Fábricas Bauducco', email: 'contato@bauducco.com.br' },
-    { id: 2, cnpj: '98.765.432/0001-00', name: 'Ypê Distribuidora', email: 'vendas@ype.com.br' }
-];
-
-const defaultPurchases = [
-    { 
-        id: 1, nf: '4440001', date: '2025-11-19', time: '10:30:00', 
-        supplierName: 'Fábricas Bauducco', supplierCnpj: '12.345.678/0001-90',
-        productName: 'Biscoito Bauducco', productId: 1,
-        qtd: 100, total: 500.00 
-    }
-];
+// --- OBJETO GLOBAL APP (Substitui os dados locais por métodos da API) ---
 
 window.App = {
-    products: loadData('db_products', defaultProducts),
-    clients: loadData('db_clients', defaultClients),
-    employees: loadData('db_employees', defaultEmployees),
-    suppliers: loadData('db_suppliers', defaultSuppliers),
-    purchases: loadData('db_purchases', defaultPurchases),
-
-    saveProducts: () => saveData('db_products', window.App.products),
-    saveClients: () => saveData('db_clients', window.App.clients),
-    saveEmployees: () => saveData('db_employees', window.App.employees),
-    saveSuppliers: () => saveData('db_suppliers', window.App.suppliers),
-    savePurchases: () => saveData('db_purchases', window.App.purchases),
-
+    
+    // Utilitários Visuais
     formatMoney: (val) => {
         if (val === undefined || val === null) return "0,00";
-        return val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    },
-    
-    generateCode: () => {
-        const p1 = Math.floor(Math.random() * 9) + 1;
-        const p2 = Math.floor(Math.random() * 900000) + 100000;
-        const p3 = Math.floor(Math.random() * 900000) + 100000;
-        return `${p1} ${p2} ${p3}`;
+        // Garante que é número antes de formatar
+        const num = parseFloat(val);
+        return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     },
 
     showToast: (msg, type = 'success') => {
         const container = document.getElementById('toast-container');
-        if(!container) return;
+        if (!container) return;
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
         toast.innerText = msg;
@@ -125,22 +102,86 @@ window.App = {
         setTimeout(() => toast.remove(), 3000);
     },
 
-    resetSystem: () => {
-        localStorage.clear();
-        location.reload();
+    // --- MÉTODOS DA API ---
+
+    // Autenticação
+    login: async (cpf) => {
+        const res = await apiRequest('/login', 'POST', { cpf_funcionario: cpf });
+        if (res.ok) {
+            return true;
+        } else {
+            const err = await res.json();
+            alert(err.erro || "Erro ao fazer login");
+            return false;
+        }
+    },
+
+    // Produtos
+    getProdutos: async (filtros = {}) => {
+        // Converte objeto de filtros em query string: ?nome=abc&codigo=123
+        const query = new URLSearchParams(filtros).toString();
+        const res = await apiRequest(`/produtos?${query}`, 'GET');
+        return res.ok ? await res.json() : [];
+    },
+    criarProduto: async (dados) => {
+        return await apiRequest('/produtos', 'POST', dados);
+    },
+
+    // Clientes
+    getClientes: async (filtros = {}) => {
+        const query = new URLSearchParams(filtros).toString();
+        const res = await apiRequest(`/clientes?${query}`, 'GET');
+        return res.ok ? await res.json() : [];
+    },
+    criarCliente: async (dados) => {
+        return await apiRequest('/clientes', 'POST', dados);
+    },
+    atualizarCliente: async (dados) => {
+        return await apiRequest('/clientes', 'PUT', dados);
+    },
+    deletarCliente: async (cpf) => {
+        return await apiRequest('/clientes', 'DELETE', { cpf: cpf });
+    },
+
+    // Funcionários
+    getFuncionarios: async (filtros = {}) => {
+        const query = new URLSearchParams(filtros).toString();
+        const res = await apiRequest(`/funcionarios?${query}`, 'GET');
+        return res.ok ? await res.json() : [];
+    },
+    criarFuncionario: async (dados) => {
+        return await apiRequest('/funcionarios', 'POST', dados);
+    },
+
+    // Fornecedores
+    getFornecedores: async (filtros = {}) => {
+        const query = new URLSearchParams(filtros).toString();
+        const res = await apiRequest(`/fornecedores?${query}`, 'GET');
+        return res.ok ? await res.json() : [];
+    },
+    criarFornecedor: async (dados) => {
+        return await apiRequest('/fornecedores', 'POST', dados);
+    },
+
+    // Caixa (Operações Stateful no Backend)
+    getCaixa: async () => {
+        const res = await apiRequest('/caixa', 'GET');
+        return res.ok ? await res.json() : { Produtos: [], Total: "0.00" };
+    },
+    adicionarAoCaixa: async (codigo) => {
+        return await apiRequest('/caixa', 'POST', { codigo: codigo });
+    },
+    removerDoCaixa: async (codigo) => {
+        return await apiRequest(`/caixa/${codigo}`, 'DELETE');
+    },
+    atualizarQtdCaixa: async (codigo, acao) => {
+        // acao: "aumentar" ou "diminuir"
+        return await apiRequest(`/caixa/${codigo}`, 'PATCH', { acao: acao });
+    },
+    limparCaixa: async () => {
+        return await apiRequest('/caixa', 'DELETE');
+    },
+    confirmarVenda: async (dadosPagamento) => {
+        return await apiRequest('/caixa/confirmar', 'POST', dadosPagamento);
     }
 };
-
-// Correção automática para garantir campos de ordenação em dados antigos
-['clients', 'suppliers', 'purchases', 'products', 'employees'].forEach(key => {
-    if (window.App[key] && Array.isArray(window.App[key])) {
-        window.App[key].forEach((item, i) => { 
-            if (item && !item.id) item.id = Date.now() + i; 
-            if (key === 'products' && item.sold === undefined) item.sold = 0;
-            if (key === 'employees' && item.salesCount === undefined) item.salesCount = 0;
-        });
-        // Salva para persistir a correção
-        if(key === 'products') window.App.saveProducts();
-        if(key === 'employees') window.App.saveEmployees();
-    }
-});
