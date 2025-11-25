@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermercado Voltante - Login</title>
+    <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="styles/login.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <header class="header"></header> 
+
+    <main class="main-content">
+        <section class="branding">
+            <h1 class="main-title">SUPERMERCADO</h1>
+            <h1 class="main-title">VOLTANTE</h1>
+            <div class="main-logo-container">
+                <div class="logo-wrapper">
+                    <img src="assets/LogoVermelha.png" alt="Logo Principal Supermercado Voltante" class="main-logo-image">
+                </div>
+            </div>
+        </section>
+
+        <aside class="login-panel" id="main-panel">
+            
+            <div id="login-view">
+                <div class="panel-header">
+                    <h2>REALIZAR LOGIN</h2>
+                </div>
+                <form class="login-form">
+                    <label for="cpf-login" class="label-cpf">CPF DO FUNCIONÁRIO</label>
+                    <input type="text" id="cpf-login" name="cpf" placeholder="Insira o seu CPF" class="input-cpf">
+                    
+                    <button type="submit" class="btn btn-confirmar">CONFIRMAR LOGIN</button>
+                    <button type="button" id="btn-ir-registro" class="btn btn-registrar">REGISTRAR NOVO FUNCIONÁRIO</button>
+                </form>
+            </div>
+
+            <div id="register-view" class="hidden">
+                <div class="panel-header-register">
+                    <h2>REGISTRAR FUNCIONÁRIO</h2>
+                </div>
+                <form class="register-form">
+                    
+                    <div class="form-group">
+                        <label>CPF</label>
+                        <input type="text" class="input-register">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Nome</label>
+                        <input type="text" class="input-register">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Salário</label>
+                        <div class="salary-wrapper">
+                            <span class="currency-symbol">R$</span>
+                            <input type="text" class="input-register" placeholder="00,00" style="padding-left: 35px;">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group half">
+                            <label>Turno</label>
+                            <select class="input-register select-register">
+                                <option>Turno</option>
+                                <option>Manhã</option>
+                                <option>Tarde</option>
+                                <option>Noite</option>
+                            </select>
+                        </div>
+                        <div class="form-group half">
+                            <label>Cargo</label>
+                            <select class="input-register select-register">
+                                <option>Cargo</option>
+                                <option>Caixa</option>
+                                <option>Estoquista</option>
+                                <option>Gerente</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Data de nascimento</label>
+                        <div class="date-row">
+                            <input type="text" class="input-register date-field" placeholder="DD">
+                            <input type="text" class="input-register date-field" placeholder="MM">
+                            <input type="text" class="input-register date-field" placeholder="YYYY">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>CPF do Supervisor</label>
+                        <input type="text" class="input-register">
+                    </div>
+
+                    <button type="submit" class="btn btn-white">REGISTRAR NOVO FUNCIONÁRIO</button>
+                    <button type="button" id="btn-cancelar" class="btn btn-white">CANCELAR</button>
+                </form>
+            </div>
+
+        </aside>
+    </main>
+
+    <script src="scripts/shared.js"></script>
+	<script src="scripts/login.js"></script>
+
+</body>
+</html>

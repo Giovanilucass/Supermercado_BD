@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermercado Voltante - Estoque</title>
+    <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="styles/estoque.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="header"></header> 
+    
+    <div id="toast-container"></div>
+
+    <main class="estoque-content">
+        
+        <section class="stock-main-panel">
+            
+            <div class="stock-filters-bar">
+                <div class="filters-row-top">
+                    <div class="hash-icon">#</div>
+                    <input type="text" id="search-name" placeholder="Inserir Nome do Produto" class="filter-input big">
+                    <input type="text" id="search-code" placeholder="Inserir Código do Produto" class="filter-input medium">
+                    <button class="btn-search-stock" id="btn-filter-trigger"><i class="fas fa-search"></i></button>
+                </div>
+                
+                <div class="filters-row-bottom">
+                    <select class="filter-select" id="sort-products" style="margin-right: 10px; font-weight: bold;">
+                        <option value="default">Ordenação Padrão</option>
+                        <option value="sold-desc">Mais Vendidos</option>
+                        <option value="price-asc">Menor Preço</option>
+                        <option value="price-desc">Maior Preço</option>
+                    </select>
+
+                    <select class="filter-select" id="filter-category">
+                        <option value="">Todas as Categorias</option>
+                        <option value="Alimento">Alimento</option>
+                        <option value="Limpeza">Limpeza</option>
+                        <option value="Higiene">Higiene</option>
+                    </select>
+
+                    <div class="filter-switch-group">
+                        <label class="switch">
+                            <input type="checkbox" id="filter-promo">
+                            <span class="slider round"></span>
+                        </label>
+                        <span class="switch-label">Promoção</span>
+                    </div>
+
+                    <div class="filter-switch-group">
+                        <label class="switch">
+                            <input type="checkbox" id="filter-ending">
+                            <span class="slider round"></span>
+                        </label>
+                        <span class="switch-label">Acabando</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stock-list-container" id="stock-list">
+                </div>
+        </section>
+
+        <aside class="stock-sidebar">
+            <div class="stock-actions-panel">
+                <div class="stock-actions-header">
+                    <h3>REGISTRAR PRODUTO</h3>
+                </div>
+                
+                <div class="stock-actions-body">
+                    <div id="stock-default-view">
+                        <button id="btn-abrir-form-estoque" class="btn-register-new-product">REGISTRAR NOVO PRODUTO</button>
+                    </div>
+
+                    <div id="stock-form-view" class="hidden">
+                        <form class="stock-register-form" id="form-register">
+                            
+                            <div class="sidebar-field">
+                                <label>Código (Automático)</label>
+                                <input type="text" id="reg-code" class="input-sidebar-stock" readonly style="background-color: #e0e0e0; color: #555;">
+                            </div>
+
+                            <div class="sidebar-field">
+                                <label>Nome</label>
+                                <input type="text" id="reg-name" class="input-sidebar-stock" required>
+                            </div>
+
+                            <div class="sidebar-field">
+                                <label>Preço</label>
+                                <div class="sidebar-price-wrapper">
+                                    <span>R$</span>
+                                    <input type="number" id="reg-price" placeholder="00,00" class="input-sidebar-price" step="0.01" required>
+                                </div>
+                            </div>
+
+                            <div class="sidebar-field">
+                                <label>Categoria</label>
+                                <select id="reg-category" class="input-sidebar-stock" required>
+                                    <option value="">Selecionar...</option>
+                                    <option value="Alimento">Alimento</option>
+                                    <option value="Limpeza">Limpeza</option>
+                                    <option value="Higiene">Higiene</option>
+                                </select>
+                            </div>
+
+                            <div class="sidebar-buttons-group">
+                                <button type="submit" class="btn-sidebar-action confirm" id="btn-confirm-register" disabled>REGISTRAR NOVO PRODUTO</button>
+                                <button type="button" id="btn-cancelar-estoque" class="btn-sidebar-action cancel">CANCELAR</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="logo-sidebar-container">
+                 <div class="logo-wrapper-small">
+                    <img src="assets/LogoVermelha.png" alt="Logo" class="sidebar-logo-img">
+                 </div>
+            </div>
+        </aside>
+    </main>
+
+    <div id="overlay-edit" class="modal-overlay hidden">
+        <div class="modal-box edit-modal">
+            <div class="modal-header">
+                <h2>EDITAR PRODUTO</h2>
+            </div>
+            <form id="form-edit" class="modal-form">
+                <div class="modal-field">
+                    <label>Código</label>
+                    <div class="input-with-icon">
+                        <input type="text" id="edit-code" readonly>
+                        <i class="fas fa-lock"></i>
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label>Nome</label>
+                    <input type="text" id="edit-name" required>
+                </div>
+
+                <div class="row-field">
+                    <div class="modal-field half">
+                        <label>Preço Base</label>
+                        <div class="price-wrapper">
+                            <span>R$</span>
+                            <input type="number" id="edit-price" step="0.01" required>
+                        </div>
+                    </div>
+                    <div class="modal-field half">
+                        <label>Categoria</label>
+                        <select id="edit-category">
+                            <option value="Alimento">Alimento</option>
+                            <option value="Limpeza">Limpeza</option>
+                            <option value="Higiene">Higiene</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-field">
+                    <label>Aplicar Promoção (%)</label>
+                    <input type="number" id="edit-promo" placeholder="0" min="0" max="100">
+                    <p class="promo-feedback">Novo valor: <span id="new-price-display">R$ --,--</span></p>
+                </div>
+                
+                <div class="modal-field">
+                    <label>Quantidade em Estoque</label>
+                    <input type="number" id="edit-qtd" required min="0">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="submit" class="btn-modal confirm" id="btn-confirm-edit">CONFIRMAR EDIÇÃO</button>
+                    <button type="button" class="btn-modal cancel" id="btn-cancel-edit">CANCELAR</button>
+                    <button type="button" class="btn-modal delete" id="btn-delete-init">DELETAR PRODUTO</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="overlay-delete" class="modal-overlay hidden">
+        <div class="modal-box delete-modal">
+            <h3>Tem certeza?</h3>
+            <p>Você está prestes a remover este item permanentemente.</p>
+            <div class="modal-actions row">
+                <button type="button" class="btn-modal delete" id="btn-confirm-delete">SIM, REMOVER</button>
+                <button type="button" class="btn-modal cancel" id="btn-cancel-delete">CANCELAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/shared.js"></script>
+	<script src="scripts/estoque.js"></script>
+	
+</body>
+</html>

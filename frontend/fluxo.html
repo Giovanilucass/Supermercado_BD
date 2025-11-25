@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Supermercado Voltante - Fluxo</title>
+    <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="styles/fluxo.css"> <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+
+    <header class="header"></header> 
+    <div id="toast-container"></div>
+
+    <main class="fluxo-content">
+        
+        <section class="dashboard-section">
+            <div class="dash-card gray">
+                <h3>TOTAL ENTRADAS (VENDAS)</h3>
+                <p id="dash-total-in">R$ 0,00</p>
+            </div>
+            <div class="dash-card gray">
+                <h3>TOTAL SAÍDAS (COMPRAS)</h3>
+                <p id="dash-total-out">R$ 0,00</p>
+            </div>
+            <div class="dash-card green">
+                <h3>LUCRO BRUTO MENSAL</h3>
+                <p id="dash-profit">R$ 0,00</p>
+            </div>
+        </section>
+
+        <section class="fluxo-list-panel">
+            
+            <div class="fluxo-filters-bar">
+                <div class="filters-row-top">
+                    <div class="hash-icon">#</div>
+                    <input type="text" id="filter-nf" placeholder="Nota Fiscal" class="filter-input big">
+                    <input type="text" id="filter-val-min" placeholder="Valor Mín." class="filter-input small">
+                    <input type="text" id="filter-val-max" placeholder="Valor Máx." class="filter-input small">
+                    <button class="btn-search-stock" id="btn-filter-fluxo"><i class="fas fa-search"></i></button>
+                </div>
+                
+                <div class="filters-row-bottom">
+                    <span class="filter-label">Min.</span>
+                    <input type="text" id="filter-date-min" placeholder="DD/MM/YYYY" class="filter-input medium">
+                    
+                    <span class="filter-label">Máx.</span>
+                    <input type="text" id="filter-date-max" placeholder="DD/MM/YYYY" class="filter-input medium">
+                </div>
+            </div>
+
+            <div class="fluxo-list-header">
+                <span style="width: 5%;">Tipo</span>
+                <span style="width: 20%;">Data e hora</span>
+                <span style="width: 25%;">Nota Fiscal</span>
+                <span style="width: 25%;">Origem</span>
+                <span style="width: 15%;">Valor</span>
+                <span style="width: 10%; text-align: center;">Detalhes</span>
+            </div>
+
+            <div class="stock-list-container" id="transaction-list">
+                </div>
+
+        </section>
+    </main>
+
+    <div id="overlay-details" class="modal-overlay hidden">
+        <div class="modal-box details-modal">
+            <div class="modal-header">
+                <h2 id="modal-title">DETALHES DA TRANSAÇÃO</h2>
+            </div>
+            <div class="modal-content-scroll">
+                
+                <div class="detail-section">
+                    <h4>DADOS DA NOTA</h4>
+                    <div class="detail-row">
+                        <label>NF:</label>
+                        <input type="text" id="det-nf" readonly class="input-locked">
+                        <i class="fas fa-lock lock-icon"></i>
+                    </div>
+                    <div class="detail-row">
+                        <label>DATA E HORA:</label>
+                        <input type="text" id="det-date" readonly class="input-locked">
+                        <i class="fas fa-lock lock-icon"></i>
+                    </div>
+                    <div class="detail-row" id="row-payment">
+                        <label>FORMA DE PAGAMENTO:</label>
+                        <input type="text" id="det-payment" readonly class="input-locked">
+                        <i class="fas fa-lock lock-icon"></i>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4 id="label-origin-type">ORIGEM</h4>
+                    <div class="detail-row">
+                        <input type="text" id="det-origin-name" readonly class="input-white">
+                    </div>
+                    <div id="supplier-extra-fields" class="hidden">
+                        <div class="detail-row">
+                            <input type="text" id="det-cnpj" readonly class="input-white">
+                        </div>
+                        <div class="detail-row">
+                            <input type="text" id="det-email" readonly class="input-white">
+                        </div>
+                        <div class="detail-row">
+                            <input type="text" id="det-phone" readonly class="input-white">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-section">
+                    <h4>ITENS DA TRANSAÇÃO</h4>
+                    <textarea id="det-items" readonly class="items-textarea"></textarea>
+                </div>
+
+                <div class="detail-total-box">
+                    <span>TOTAL DA TRANSAÇÃO :</span>
+                    <span id="det-total-value">R$ 0,00</span>
+                </div>
+
+                <button class="btn-close-modal" id="btn-close-details">FECHAR</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="scripts/shared.js"></script>
+    <script src="scripts/fluxo.js"></script> </body>
+</html>
