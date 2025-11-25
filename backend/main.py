@@ -8,6 +8,7 @@ from rotas.fornecedores import fornecedores_blueprint
 from rotas.produtos import produtos_blueprint
 from rotas.caixa import caixa_blueprint
 from rotas.authService import auth_blueprint
+from rotas.fluxo import fluxo_blueprint
 
 app = Flask(__name__)
 app.secret_key = "chaveextremamentesecretanowaymuitosecreto:O"
@@ -31,6 +32,7 @@ app.register_blueprint(fornecedores_blueprint)
 app.register_blueprint(produtos_blueprint)
 app.register_blueprint(auth_blueprint)
 app.register_blueprint(caixa_blueprint)
+app.register_blueprint(fluxo_blueprint)
 
 if __name__ == "__main__":
     # O host="0.0.0.0" é essencial para permitir conexões externas (pelo IP)

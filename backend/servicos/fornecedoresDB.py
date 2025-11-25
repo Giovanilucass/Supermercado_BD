@@ -10,7 +10,6 @@ class fornecedoresDB:
         if not cnpj: return ""
         return str(cnpj).replace(".", "").replace("-", "").replace("/", "")
 
-    # --- LISTAGEM COM FILTROS (TELA PRINCIPAL) ---
     def buscar_fornecedores(self, nome=None, cnpj=None):
         con = self.db.conn
         cursor = con.cursor()
@@ -28,8 +27,6 @@ class fornecedoresDB:
         
         if cnpj:
             sql += " AND CNPJ LIKE %s"
-            # A tela parece usar CNPJ formatado, mas se o banco for limpo, use _limpar_cnpj
-            # Assumindo que o banco guarda formatado igual cliente:
             params.append(f"%{cnpj}%")
 
         sql += " ORDER BY Nome ASC"
@@ -38,17 +35,14 @@ class fornecedoresDB:
         colunas = [desc[0] for desc in cursor.description]
         return [dict(zip(colunas, row)) for row in cursor.fetchall()]
 
-    # --- BUSCA INDIVIDUAL (PARA EDIÇÃO) ---
     def get_fornecedor_por_cnpj(self, cnpj):
         con = self.db.conn
         cursor = con.cursor()
         
-        # 1. Dados Básicos
         cursor.execute("SELECT CNPJ, Nome, Email FROM Fornecedor WHERE CNPJ = %s", (cnpj,))
         fornecedor = cursor.fetchone()
         if not fornecedor: return None
 
-        # 2. Telefones
         cursor.execute("SELECT Numero, tipo FROM TELEFONE_Fornecedor WHERE CNPJ = %s", (cnpj,))
         telefones = [{"numero": row[0], "tipo": row[1]} for row in cursor.fetchall()]
 
@@ -59,12 +53,10 @@ class fornecedoresDB:
             "telefones": telefones
         }
 
-    # --- BUSCA PRODUTOS FORNECIDOS (MODAL "OLHO") ---
     def get_produtos_do_fornecedor(self, cnpj):
         con = self.db.conn
         cursor = con.cursor()
         
-        # Faz JOIN entre Fornecedor -> Fornece -> Produto
         sql = """
             SELECT p.Codigo, p.Nome
             FROM Produto p
@@ -76,7 +68,6 @@ class fornecedoresDB:
         colunas = [desc[0] for desc in cursor.description]
         return [dict(zip(colunas, row)) for row in cursor.fetchall()]
 
-    # --- CRIAR FORNECEDOR ---
     def criar_fornecedor(self, dados):
         cnpj = dados.get("cnpj")
         nome = dados.get("nome")
@@ -87,13 +78,11 @@ class fornecedoresDB:
         cursor = con.cursor()
 
         try:
-            # Insere Fornecedor
             cursor.execute(
                 "INSERT INTO Fornecedor (CNPJ, Nome, Email) VALUES (%s, %s, %s)",
                 (cnpj, nome, email)
             )
 
-            # Insere Telefones
             for tel in telefones:
                 if tel.get("numero"):
                     cursor.execute(
@@ -111,7 +100,6 @@ class fornecedoresDB:
             con.rollback()
             return {"erro": f"Erro ao criar: {str(e)}"}
 
-    # --- ATUALIZAR FORNECEDOR ---
     def atualizar_fornecedor(self, cnpj_original, dados):
         nome = dados.get("nome")
         email = dados.get("email")
@@ -121,13 +109,11 @@ class fornecedoresDB:
         cursor = con.cursor()
 
         try:
-            # Atualiza dados
             cursor.execute(
                 "UPDATE Fornecedor SET Nome = %s, Email = %s WHERE CNPJ = %s",
                 (nome, email, cnpj_original)
             )
 
-            # Atualiza Telefones (Limpa e Refaz)
             cursor.execute("DELETE FROM TELEFONE_Fornecedor WHERE CNPJ = %s", (cnpj_original,))
 
             for tel in telefones:
@@ -143,19 +129,11 @@ class fornecedoresDB:
             con.rollback()
             return {"erro": f"Erro ao atualizar: {str(e)}"}
 
-    # --- DELETAR FORNECEDOR ---
     def deletar_fornecedor(self, cnpj):
         con = self.db.conn
         cursor = con.cursor()
 
         try:
-            # Tenta deletar. Se tiver produtos vinculados (tabela Fornece) ou histórico de entrada (Venda_Fornecedor),
-            # o banco vai bloquear (se estiver configurado sem CASCADE nessas tabelas importantes).
-            
-            # Nota: A tabela Fornece (vínculo com produto) pode ter CASCADE se você quiser que, 
-            # ao apagar o fornecedor, ele deixe de fornecer o produto. 
-            # Mas Venda_Fornecedor (financeiro) deve bloquear.
-            
             cursor.execute("DELETE FROM Fornecedor WHERE CNPJ = %s", (cnpj,))
             con.commit()
             
