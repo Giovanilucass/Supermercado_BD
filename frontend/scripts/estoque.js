@@ -18,8 +18,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const catFilter = document.getElementById('filter-category')?.value || '';
         const promoFilter = document.getElementById('filter-promo')?.checked || false;
         const endingFilter = document.getElementById('filter-ending')?.checked || false;
+        const sortType = document.getElementById('sort-products')?.value || 'default';
 
-        const filtered = products.filter(p => {
+        let filtered = products.filter(p => {
             const matchName = p.name.toLowerCase().includes(nameFilter);
             const matchCode = p.code.replace(/\s/g, '').includes(codeFilter.replace(/\s/g, ''));
             const matchCat = catFilter === '' || p.category === catFilter;
@@ -28,13 +29,23 @@ document.addEventListener('DOMContentLoaded', () => {
             return matchName && matchCode && matchCat && matchPromo && matchEnding;
         });
 
+        // Lógica de Ordenação
+        if (sortType === 'sold-desc') {
+            filtered.sort((a, b) => (b.sold || 0) - (a.sold || 0));
+        } else if (sortType === 'price-asc') {
+            filtered.sort((a, b) => a.price - b.price);
+        } else if (sortType === 'price-desc') {
+            filtered.sort((a, b) => b.price - a.price);
+        }
+
         filtered.forEach(p => {
             const finalPrice = p.price * (1 - (p.promo / 100));
             const item = document.createElement('div');
             item.className = 'stock-item-row';
+            // Adicionei um pequeno indicador de vendas (title) para conferência
             item.innerHTML = `
                 <div class="stock-field-group code-col"><label>Código</label><input type="text" value="${p.code}" readonly class="stock-input"></div>
-                <div class="stock-field-group name-col"><label>Nome</label><input type="text" value="${p.name}" class="stock-input" readonly></div>
+                <div class="stock-field-group name-col"><label>Nome ${p.sold ? '<span style="font-size:9px;color:#666">('+p.sold+' vend.)</span>' : ''}</label><input type="text" value="${p.name}" class="stock-input" readonly></div>
                 <div class="stock-field-group price-col"><label>Preço ${p.promo > 0 ? '(-' + p.promo + '%)' : ''}</label><div class="price-input-wrapper"><span>R$</span><input type="text" value="${formatMoney(finalPrice)}" class="stock-input-transparent" readonly></div></div>
                 <div class="stock-field-group cat-col"><label>Categoria</label><input type="text" value="${p.category}" class="stock-input" readonly></div>
                 <button class="btn-edit-stock" onclick="openEditModal(${p.id})"><i class="fas fa-pen"></i></button>
@@ -43,10 +54,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    // Listeners
     document.getElementById('btn-filter-trigger')?.addEventListener('click', renderStock);
     document.querySelectorAll('.filter-input, .filter-select, .switch input').forEach(el => {
         el.addEventListener('input', renderStock);
-        el.addEventListener('change', renderStock);
+        el.addEventListener('change', renderStock); // Isso pega a mudança do select de ordenação
     });
     
     renderStock();

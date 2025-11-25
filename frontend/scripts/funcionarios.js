@@ -20,7 +20,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const mmFilter = document.getElementById('filter-emp-mm')?.value || '';
         const yyyyFilter = document.getElementById('filter-emp-yyyy')?.value || '';
 
-        const filtered = employees.filter(e => {
+        // NOVO: Ordenação
+        const sortType = document.getElementById('sort-emp')?.value || 'default';
+
+        let filtered = employees.filter(e => {
             const matchName = e.name.toLowerCase().includes(nameFilter);
             const matchCpf = e.cpf.includes(cpfFilter);
             const matchTurno = turnoFilter === '' || e.turno === turnoFilter;
@@ -34,23 +37,32 @@ document.addEventListener('DOMContentLoaded', () => {
             return matchName && matchCpf && matchTurno && matchCargo && matchSup && matchDate;
         });
 
+        // Lógica de Ordenação
+        if (sortType === 'sales-desc') {
+            filtered.sort((a, b) => (b.salesCount || 0) - (a.salesCount || 0));
+        } else if (sortType === 'salary-desc') {
+            filtered.sort((a, b) => a.salary - b.salary);
+        }
+
         filtered.forEach(e => {
             const row = document.createElement('div');
             row.className = 'stock-item-row';
+            // Adicionei contador de vendas ao cargo para visualização
+            const salesDisplay = e.salesCount ? ` (${e.salesCount} vendas)` : '';
+            
             row.innerHTML = `
                 <div class="stock-field-group emp-col-name"><label>Nome</label><input type="text" value="${e.name}" readonly class="stock-input"></div>
                 <div class="stock-field-group emp-col-cpf"><label>CPF</label><input type="text" value="${e.cpf}" readonly class="stock-input"></div>
                 <div class="stock-field-group emp-col-date"><label>Nascimento</label><input type="text" value="${e.dob}" readonly class="stock-input"></div>
                 <div class="stock-field-group emp-col-salary"><label>Salário</label><div class="price-input-wrapper"><span>R$</span><input type="text" value="${formatMoney(e.salary)}" class="stock-input-transparent" readonly></div></div>
                 <div class="stock-field-group emp-col-turno"><label>Turno</label><input type="text" value="${e.turno}" readonly class="stock-input"></div>
-                <div class="stock-field-group emp-col-cargo"><label>Cargo</label><input type="text" value="${e.cargo}" readonly class="stock-input"></div>
+                <div class="stock-field-group emp-col-cargo"><label>Cargo</label><input type="text" value="${e.cargo}${salesDisplay}" readonly class="stock-input" title="Vendas realizadas"></div>
                 <div class="stock-field-group emp-col-sup"><label>Supervisor</label><input type="text" value="${e.supervisor}" readonly class="stock-input"></div>
                 <div class="emp-col-btn"><button class="btn-edit-stock" onclick="openEditEmpModal(${e.id})"><i class="fas fa-pen"></i></button></div>
             `;
             empList.appendChild(row);
         });
     };
-
     document.querySelectorAll('.filter-input, .filter-select').forEach(input => {
         input.addEventListener('input', renderEmployees);
         input.addEventListener('change', renderEmployees);

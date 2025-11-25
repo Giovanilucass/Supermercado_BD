@@ -6,9 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!purchaseList) return;
 
     // Referências Globais
-    let purchases = window.App.purchases;
-    let products = window.App.products;
-    let suppliers = window.App.suppliers;
+    let purchases = window.App.purchases || [];
+    let products = window.App.products || [];
+    let suppliers = window.App.suppliers || [];
     const { formatMoney, showToast, savePurchases } = window.App;
 
     // --- Datalists (Autocompletar) ---
@@ -16,21 +16,25 @@ document.addEventListener('DOMContentLoaded', () => {
         const dlSup = document.getElementById('datalist-suppliers');
         const dlProd = document.getElementById('datalist-products');
         
-        dlSup.innerHTML = '';
-        suppliers.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.cnpj;
-            opt.label = s.name;
-            dlSup.appendChild(opt);
-        });
+        if (dlSup) {
+            dlSup.innerHTML = '';
+            suppliers.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.cnpj;
+                opt.label = s.name;
+                dlSup.appendChild(opt);
+            });
+        }
 
-        dlProd.innerHTML = '';
-        products.forEach(p => {
-            const opt = document.createElement('option');
-            opt.value = p.name; // Ou código se preferir
-            opt.label = `Cód: ${p.code} - R$ ${p.price}`;
-            dlProd.appendChild(opt);
-        });
+        if (dlProd) {
+            dlProd.innerHTML = '';
+            products.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.name; 
+                opt.label = `Cód: ${p.code} - R$ ${formatMoney(p.price)}`;
+                dlProd.appendChild(opt);
+            });
+        }
     };
     setupDatalists();
 
@@ -38,53 +42,62 @@ document.addEventListener('DOMContentLoaded', () => {
     const renderPurchases = () => {
         purchaseList.innerHTML = '';
         
-        // Filtros
-        const generalFilter = document.getElementById('filter-general').value.toLowerCase();
+        // Captura Filtros com Segurança
+        const generalInput = document.getElementById('filter-general');
+        const generalFilter = generalInput ? generalInput.value.toLowerCase() : '';
         
-        // Cálculos de Total
+        const dateMinInput = document.getElementById('filter-date-min');
+        const dateMin = dateMinInput ? dateMinInput.value : '';
+        
+        const dateMaxInput = document.getElementById('filter-date-max');
+        const dateMax = dateMaxInput ? dateMaxInput.value : '';
+        
+        const valMinInput = document.getElementById('filter-val-min');
+        const valMin = valMinInput ? (parseFloat(valMinInput.value) || 0) : 0;
+        
+        const valMaxInput = document.getElementById('filter-val-max');
+        const valMax = valMaxInput ? (parseFloat(valMaxInput.value) || Infinity) : Infinity;
+
         let totalFiltered = 0;
 
         const filtered = purchases.filter(p => {
-            const term = generalFilter;
-            const matchNF = p.nf.toLowerCase().includes(term);
-            const matchSupName = p.supplierName.toLowerCase().includes(term);
-            const matchProdName = p.productName.toLowerCase().includes(term);
+            if (!p) return false; // Ignora itens nulos
+
+            // Proteção: Garante que as propriedades existam antes de usar toLowerCase
+            const nfText = (p.nf || '').toLowerCase();
+            const supText = (p.supplierName || '').toLowerCase();
+            const prodText = (p.productName || '').toLowerCase();
             
-            // Filtros Avançados (Simplificado)
-            // Para implementar filtros de data/preço, bastaria ler os inputs do #advanced-filters
+            // Filtro Texto
+            const matchText = nfText.includes(generalFilter) ||
+                              supText.includes(generalFilter) ||
+                              prodText.includes(generalFilter);
             
-            return matchNF || matchSupName || matchProdName;
+            // Filtro Valor
+            const pTotal = p.total || 0;
+            const matchVal = pTotal >= valMin && pTotal <= valMax;
+
+            // Filtro Data
+            let matchDate = true;
+            if (p.date) {
+                if (dateMin && p.date < dateMin) matchDate = false;
+                if (dateMax && p.date > dateMax) matchDate = false;
+            }
+
+            return matchText && matchVal && matchDate;
         });
 
         filtered.forEach(p => {
-            totalFiltered += p.total;
+            totalFiltered += (p.total || 0);
             const row = document.createElement('div');
             row.className = 'stock-item-row';
             row.innerHTML = `
-                <div class="stock-field-group pur-col-nf">
-                    <label>Nota Fiscal</label>
-                    <input type="text" value="${p.nf}" readonly class="stock-input">
-                </div>
-                <div class="stock-field-group pur-col-date">
-                    <label>Data e hora</label>
-                    <input type="text" value="${p.date} ${p.time}" readonly class="stock-input">
-                </div>
-                <div class="stock-field-group pur-col-sup">
-                    <label>Fornecedor</label>
-                    <input type="text" value="${p.supplierName}" readonly class="stock-input">
-                </div>
-                <div class="stock-field-group pur-col-cnpj">
-                    <label>CNPJ</label>
-                    <input type="text" value="${p.supplierCnpj}" readonly class="stock-input">
-                </div>
-                <div class="stock-field-group pur-col-prod">
-                    <label>Produto</label>
-                    <input type="text" value="${p.productName} (x${p.qtd})" readonly class="stock-input">
-                </div>
-                <div class="stock-field-group pur-col-total">
-                    <label>Preço</label>
-                    <input type="text" value="R$ ${formatMoney(p.total)}" readonly class="stock-input">
-                </div>
+                <div class="stock-field-group pur-col-nf"><label>Nota Fiscal</label><input type="text" value="${p.nf || '-'}" readonly class="stock-input"></div>
+                <div class="stock-field-group pur-col-date"><label>Data</label><input type="text" value="${p.date || ''} ${p.time || ''}" readonly class="stock-input"></div>
+                <div class="stock-field-group pur-col-sup"><label>Fornecedor</label><input type="text" value="${p.supplierName || '-'}" readonly class="stock-input"></div>
+                <div class="stock-field-group pur-col-prod"><label>Produto</label><input type="text" value="${p.productName || '-'}" readonly class="stock-input"></div>
+                <div class="stock-field-group pur-col-qtd"><label>Qtd.</label><input type="text" value="${p.qtd || 0}" readonly class="stock-input" style="text-align:center;"></div>
+                <div class="stock-field-group pur-col-total"><label>Total</label><input type="text" value="R$ ${formatMoney(p.total)}" readonly class="stock-input" style="text-align:right; font-weight:bold;"></div>
                 <div class="pur-col-btn">
                     <button class="btn-edit-stock" onclick="openEditPurchaseModal(${p.id})"><i class="fas fa-pen"></i></button>
                 </div>
@@ -92,20 +105,24 @@ document.addEventListener('DOMContentLoaded', () => {
             purchaseList.appendChild(row);
         });
 
-        document.getElementById('total-filtered-display').innerText = `R$ ${formatMoney(totalFiltered)}`;
+        const totalDisplay = document.getElementById('total-filtered-display');
+        if(totalDisplay) totalDisplay.innerText = `R$ ${formatMoney(totalFiltered)}`;
         
         if (filtered.length === 0) {
             purchaseList.innerHTML = '<p style="text-align:center; padding:20px; color:#666;">Nenhuma compra encontrada.</p>';
         }
     };
 
-    document.getElementById('filter-general').addEventListener('input', renderPurchases);
-    renderPurchases();
-
-    // --- Toggle Filtros Avançados ---
-    document.getElementById('btn-toggle-filters').addEventListener('click', () => {
-        document.getElementById('advanced-filters').classList.toggle('hidden');
+    // Listeners de Filtros
+    const btnFilter = document.getElementById('btn-filter-trigger');
+    if(btnFilter) btnFilter.addEventListener('click', renderPurchases);
+    
+    document.querySelectorAll('.filter-input').forEach(input => {
+        input.addEventListener('input', renderPurchases);
+        input.addEventListener('change', renderPurchases);
     });
+    
+    renderPurchases(); // Renderiza ao carregar
 
     // --- Nova Compra ---
     const btnNew = document.getElementById('btn-new-purchase');
@@ -114,59 +131,71 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnDeleteInit = document.getElementById('btn-delete-purchase-init');
     let currentId = null;
 
-    btnNew.addEventListener('click', () => {
-        currentId = null;
-        form.reset();
-        // Preenche data/hora atual
-        const now = new Date();
-        document.getElementById('pur-date').valueAsDate = now;
-        document.getElementById('pur-time').value = now.toTimeString().substring(0,5);
-        
-        document.getElementById('modal-purchase-title').innerText = 'REGISTRAR ENTRADA ESTOQUE';
-        btnDeleteInit.classList.add('hidden');
-        overlay.classList.remove('hidden');
-    });
+    if (btnNew) {
+        btnNew.addEventListener('click', () => {
+            currentId = null;
+            if(form) form.reset();
+            const now = new Date();
+            // Formata data para YYYY-MM-DD para input date
+            const isoDate = now.toISOString().split('T')[0];
+            const timeStr = now.toTimeString().substring(0,5);
+            
+            const dateInput = document.getElementById('pur-date');
+            if(dateInput) dateInput.value = isoDate;
+            
+            const timeInput = document.getElementById('pur-time');
+            if(timeInput) timeInput.value = timeStr;
+            
+            document.getElementById('modal-purchase-title').innerText = 'REGISTRAR ENTRADA ESTOQUE';
+            btnDeleteInit.classList.add('hidden');
+            overlay.classList.remove('hidden');
+        });
+    }
 
-    // Auto-preencher Fornecedor pelo CNPJ
-    document.getElementById('pur-cnpj').addEventListener('change', (e) => {
-        const val = e.target.value;
-        const sup = suppliers.find(s => s.cnpj === val);
-        if(sup) {
-            document.getElementById('pur-supplier-name').value = sup.name;
-        }
-    });
+    // Auto-preencher Fornecedor
+    const cnpjInput = document.getElementById('pur-cnpj');
+    if (cnpjInput) {
+        cnpjInput.addEventListener('change', (e) => {
+            const val = e.target.value;
+            const sup = suppliers.find(s => s.cnpj === val);
+            if(sup) document.getElementById('pur-supplier-name').value = sup.name;
+        });
+    }
 
-    // Salvar (Novo ou Edição)
-    form.addEventListener('submit', (e) => {
-        e.preventDefault();
-        
-        const newPurchase = {
-            id: currentId || Date.now(),
-            nf: document.getElementById('pur-nf').value,
-            date: document.getElementById('pur-date').value,
-            time: document.getElementById('pur-time').value,
-            supplierCnpj: document.getElementById('pur-cnpj').value,
-            supplierName: document.getElementById('pur-supplier-name').value,
-            productName: document.getElementById('pur-product').value,
-            qtd: parseInt(document.getElementById('pur-qtd').value),
-            total: parseFloat(document.getElementById('pur-total').value)
-        };
+    // Salvar
+    if (form) {
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const newPurchase = {
+                id: currentId || Date.now(),
+                nf: document.getElementById('pur-nf').value,
+                date: document.getElementById('pur-date').value,
+                time: document.getElementById('pur-time').value,
+                supplierCnpj: document.getElementById('pur-cnpj').value,
+                supplierName: document.getElementById('pur-supplier-name').value,
+                productName: document.getElementById('pur-product').value,
+                qtd: parseInt(document.getElementById('pur-qtd').value),
+                total: parseFloat(document.getElementById('pur-total').value)
+            };
 
-        if (currentId) {
-            const idx = purchases.findIndex(p => p.id === currentId);
-            if(idx > -1) purchases[idx] = newPurchase;
-            showToast('Compra atualizada!');
-        } else {
-            purchases.push(newPurchase);
-            showToast('Entrada registrada!');
-        }
+            if (currentId) {
+                const idx = purchases.findIndex(p => p.id === currentId);
+                if(idx > -1) purchases[idx] = newPurchase;
+                showToast('Compra atualizada!');
+            } else {
+                purchases.push(newPurchase);
+                showToast('Entrada registrada!');
+            }
 
-        savePurchases();
-        renderPurchases();
-        overlay.classList.add('hidden');
-    });
+            savePurchases();
+            renderPurchases();
+            overlay.classList.add('hidden');
+        });
+    }
 
-    document.getElementById('btn-cancel-purchase').addEventListener('click', () => overlay.classList.add('hidden'));
+    const btnCancel = document.getElementById('btn-cancel-purchase');
+    if(btnCancel) btnCancel.addEventListener('click', () => overlay.classList.add('hidden'));
 
     // --- Editar ---
     window.openEditPurchaseModal = (id) => {
@@ -175,14 +204,14 @@ document.addEventListener('DOMContentLoaded', () => {
         currentId = id;
 
         document.getElementById('modal-purchase-title').innerText = 'EDITAR COMPRA';
-        document.getElementById('pur-nf').value = p.nf;
-        document.getElementById('pur-date').value = p.date;
-        document.getElementById('pur-time').value = p.time;
-        document.getElementById('pur-cnpj').value = p.supplierCnpj;
-        document.getElementById('pur-supplier-name').value = p.supplierName;
-        document.getElementById('pur-product').value = p.productName;
-        document.getElementById('pur-qtd').value = p.qtd;
-        document.getElementById('pur-total').value = p.total;
+        document.getElementById('pur-nf').value = p.nf || '';
+        document.getElementById('pur-date').value = p.date || '';
+        document.getElementById('pur-time').value = p.time || '';
+        document.getElementById('pur-cnpj').value = p.supplierCnpj || '';
+        document.getElementById('pur-supplier-name').value = p.supplierName || '';
+        document.getElementById('pur-product').value = p.productName || '';
+        document.getElementById('pur-qtd').value = p.qtd || 0;
+        document.getElementById('pur-total').value = p.total || 0;
 
         btnDeleteInit.classList.remove('hidden');
         overlay.classList.remove('hidden');
@@ -190,22 +219,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Deletar ---
     const deleteOverlay = document.getElementById('overlay-delete');
+    const btnConfirmDelete = document.getElementById('btn-confirm-delete');
+    const btnCancelDelete = document.getElementById('btn-cancel-delete');
     
-    btnDeleteInit.addEventListener('click', () => deleteOverlay.classList.remove('hidden'));
-    document.getElementById('btn-cancel-delete').addEventListener('click', () => deleteOverlay.classList.add('hidden'));
+    if (btnDeleteInit) {
+        btnDeleteInit.addEventListener('click', () => deleteOverlay.classList.remove('hidden'));
+    }
+    if (btnCancelDelete) {
+        btnCancelDelete.addEventListener('click', () => deleteOverlay.classList.add('hidden'));
+    }
     
-    document.getElementById('btn-confirm-delete').addEventListener('click', () => {
-        if(currentId) {
-            const idx = purchases.findIndex(p => p.id === currentId);
-            if(idx > -1) {
-                purchases.splice(idx, 1);
-                savePurchases();
-                renderPurchases();
-                showToast('Registro deletado!');
-                overlay.classList.add('hidden');
-                deleteOverlay.classList.add('hidden');
+    if (btnConfirmDelete) {
+        btnConfirmDelete.addEventListener('click', () => {
+            if(currentId) {
+                const idx = purchases.findIndex(p => p.id === currentId);
+                if(idx > -1) {
+                    purchases.splice(idx, 1);
+                    savePurchases();
+                    renderPurchases();
+                    showToast('Registro deletado!');
+                    overlay.classList.add('hidden');
+                    deleteOverlay.classList.add('hidden');
+                }
             }
-        }
-    });
-
+        });
+    }
 });

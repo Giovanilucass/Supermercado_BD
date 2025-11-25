@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Supermercado Voltante - Reestoque</title>
     <link rel="stylesheet" href="styles/global.css">
-    <link rel="stylesheet" href="styles/reestoque.css"> <!-- CSS Específico -->
+    <link rel="stylesheet" href="styles/reestoque.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
@@ -16,123 +16,95 @@
 
     <main class="reestoque-content">
         
-        <!-- PAINEL PRINCIPAL (LARGURA TOTAL) -->
-        <section class="full-width-panel">
+        <section class="stock-main-panel">
             
-            <!-- Barra de Filtros (Estilo Cinza/Vermelho conforme imagem) -->
-            <div class="reestoque-filters-bar">
-                <div class="hash-box-red">#</div>
+            <div class="stock-filters-bar">
+                <div class="filters-row-top full-width">
+                    <div class="hash-icon">#</div>
+                    <input type="text" id="filter-general" placeholder="Buscar por Nota Fiscal, Produto ou Fornecedor..." class="filter-input big">
+                    <button class="btn-search-stock" id="btn-filter-trigger"><i class="fas fa-search"></i></button>
+                </div>
                 
-                <!-- Busca Geral -->
-                <input type="text" id="filter-general" placeholder="Buscar produtos, fornecedores ou nota fiscal..." class="filter-input-wide">
-                
-                <!-- Botão Filtros -->
-                <div class="filter-btn-wrapper">
-                    <button id="btn-toggle-filters" class="btn-gray-filter">Filtros <i class="fas fa-caret-down"></i></button>
-                    <!-- Dropdown de filtros avançados (escondido por padrão) -->
-                    <div id="advanced-filters" class="advanced-filters-box hidden">
-                        <label>Preço:</label>
-                        <div class="row-mini">
-                            <select id="filter-price-type"><option value="gt">Maior que</option><option value="lt">Menor que</option></select>
-                            <input type="number" id="filter-price-val" placeholder="R$ 0,00">
-                        </div>
-                        <label>Data:</label>
-                        <div class="row-mini">
-                            <input type="date" id="filter-date-min">
-                            <input type="date" id="filter-date-max">
-                        </div>
+                <div class="filters-row-bottom space-between">
+                    <div class="filter-group-inline">
+                        <span class="filter-label">Data:</span>
+                        <input type="date" id="filter-date-min" class="filter-input medium" style="color: #333;">
+                        <span class="filter-label">até</span>
+                        <input type="date" id="filter-date-max" class="filter-input medium" style="color: #333;">
+                    </div>
+                    <div class="filter-group-inline">
+                        <span class="filter-label">Valor (R$):</span>
+                        <input type="number" id="filter-val-min" placeholder="Mín" class="filter-input small">
+                        <span class="filter-label">até</span>
+                        <input type="number" id="filter-val-max" placeholder="Máx" class="filter-input small">
                     </div>
                 </div>
+            </div>
 
-                <!-- Botão Nova Compra -->
-                <button id="btn-new-purchase" class="btn-green-add"><i class="fas fa-plus"></i> Nova Compra</button>
-
-                <!-- Total Filtrado -->
-                <div class="total-filtered-box">
+            <div class="action-bar-top">
+                <button id="btn-new-purchase" class="btn-register-new-product" style="width: auto; padding: 10px 30px; background-color: var(--primary-color); color: white;">
+                    <i class="fas fa-plus"></i> REGISTRAR NOVA COMPRA
+                </button>
+                <div class="total-display-box">
                     TOTAL FILTRADO: <span id="total-filtered-display">R$ 0,00</span>
                 </div>
             </div>
 
-            <!-- Cabeçalho da Lista -->
             <div class="reestoque-list-header">
                 <span style="width: 15%;">Nota Fiscal</span>
                 <span style="width: 15%;">Data</span>
                 <span style="width: 20%;">Fornecedor</span>
-                <span style="width: 15%;">CNPJ</span>
-                <span style="width: 20%;">Produto (Resumo)</span>
-                <span style="width: 10%;">Total</span>
-                <span style="width: 5%;"></span>
+                <span style="width: 20%;">Produto</span>
+                <span style="width: 10%; text-align: center;">Qtd.</span>
+                <span style="width: 10%; text-align: right;">Total</span>
+                <span style="width: 10%;"></span>
             </div>
 
-            <!-- Lista de Compras -->
             <div class="stock-list-container" id="purchase-list">
-                <!-- Injetado via JS -->
-            </div>
+                </div>
 
         </section>
 
     </main>
 
-    <!-- MODAL: REGISTRAR/EDITAR COMPRA (VERMELHO) -->
     <div id="overlay-purchase" class="modal-overlay hidden">
         <div class="modal-box edit-modal purchase-modal-size">
             <div class="modal-header">
                 <h2 id="modal-purchase-title">REGISTRAR ENTRADA ESTOQUE</h2>
             </div>
             <form id="form-purchase" class="modal-form">
-                
-                <!-- Busca Rápida de Fornecedor (Auto-preencher) -->
                 <div class="modal-field">
-                    <label>CNPJ (Busca Fornecedor)</label>
+                    <label>CNPJ (Busca)</label>
                     <div class="input-with-icon">
-                        <input type="text" id="pur-cnpj" placeholder="Digite para buscar..." list="datalist-suppliers" required>
+                        <input type="text" id="pur-cnpj" placeholder="Digite CNPJ..." list="datalist-suppliers" required>
                         <datalist id="datalist-suppliers"></datalist>
                         <i class="fas fa-search"></i>
                     </div>
                 </div>
-
                 <div class="modal-field">
                     <label>Nome Fornecedor</label>
                     <input type="text" id="pur-supplier-name" required>
                 </div>
-
                 <div class="modal-field">
                     <label>Número da Nota Fiscal</label>
                     <input type="text" id="pur-nf" required>
                 </div>
-
                 <div class="row-field">
-                    <div class="modal-field half">
-                        <label>Data de Compra</label>
-                        <input type="date" id="pur-date" required>
-                    </div>
-                    <div class="modal-field half">
-                        <label>Hora da Compra</label>
-                        <input type="time" id="pur-time" required>
-                    </div>
+                    <div class="modal-field half"><label>Data de Compra</label><input type="date" id="pur-date" required></div>
+                    <div class="modal-field half"><label>Hora da Compra</label><input type="time" id="pur-time" required></div>
                 </div>
-
-                <!-- Produto e Qtd -->
                 <div class="modal-field">
                     <label>Produto (Busca)</label>
                     <input type="text" id="pur-product" placeholder="Nome ou Código..." list="datalist-products" required>
                     <datalist id="datalist-products"></datalist>
                 </div>
-
                 <div class="row-field">
-                    <div class="modal-field half">
-                        <label>Quantidade</label>
-                        <input type="number" id="pur-qtd" min="1" required>
-                    </div>
+                    <div class="modal-field half"><label>Quantidade</label><input type="number" id="pur-qtd" min="1" required></div>
                     <div class="modal-field half">
                         <label>Valor Total da Nota</label>
-                        <div class="price-wrapper">
-                            <span>R$</span>
-                            <input type="number" id="pur-total" step="0.01" required>
-                        </div>
+                        <div class="price-wrapper"><span>R$</span><input type="number" id="pur-total" step="0.01" required></div>
                     </div>
                 </div>
-
                 <div class="modal-actions">
                     <button type="submit" class="btn-modal confirm">CONFIRMAR ENTRADA</button>
                     <button type="button" class="btn-modal cancel" id="btn-cancel-purchase">CANCELAR</button>
@@ -142,7 +114,6 @@
         </div>
     </div>
 
-    <!-- POP-UP: CONFIRMAÇÃO DE EXCLUSÃO -->
     <div id="overlay-delete" class="modal-overlay hidden">
         <div class="modal-box delete-modal">
             <h3>Tem certeza?</h3>

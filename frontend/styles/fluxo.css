@@ -45,6 +45,14 @@
     color: white;
 }
 
+/* NOVO: Lucro Negativo */
+.dash-card.red {
+    background-color: #c62828; /* Vermelho */
+}
+.dash-card.red h3, .dash-card.red p {
+    color: white;
+}
+
 /* 2. Painel Principal */
 .fluxo-list-panel {
     display: flex;

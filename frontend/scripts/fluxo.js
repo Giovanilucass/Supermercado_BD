@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     ];
 
     // --- 2. CÁLCULO DO DASHBOARD ---
+    // 2.1. FEEDBACK VISUAL: Lucro Negativo
     const updateDashboard = () => {
         let totalIn = 0;
         let totalOut = 0;
@@ -52,10 +53,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const profit = totalIn - totalOut;
+        const dashProfit = document.getElementById('dash-profit');
 
         document.getElementById('dash-total-in').innerText = `R$ ${formatMoney(totalIn)}`;
         document.getElementById('dash-total-out').innerText = `R$ ${formatMoney(totalOut)}`;
-        document.getElementById('dash-profit').innerText = `R$ ${formatMoney(profit)}`;
+        dashProfit.innerText = `R$ ${formatMoney(profit)}`;
+
+        // Lógica da cor
+        if (profit < 0) {
+            dashProfit.parentElement.classList.remove('green');
+            dashProfit.parentElement.classList.add('red');
+        } else {
+            dashProfit.parentElement.classList.remove('red');
+            dashProfit.parentElement.classList.add('green');
+        }
     };
 
     // --- 3. RENDERIZAÇÃO DA LISTA ---

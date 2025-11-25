@@ -120,6 +120,26 @@
             </div>
         </div>
     </div>
+	
+	<div id="overlay-sup-details" class="modal-overlay hidden">
+        <div class="modal-box edit-modal" style="background-color: white; color: #333; border: 1px solid #ccc;">
+            <div class="modal-header" style="border-bottom: 1px solid #ddd;">
+                <h2 style="color: var(--primary-color);">PRODUTOS FORNECIDOS</h2>
+            </div>
+            <div class="modal-content-scroll">
+                <div class="detail-row">
+                    <label style="color:#333;">Fornecedor:</label>
+                    <input type="text" id="det-sup-name" readonly class="input-locked">
+                </div>
+                <div class="detail-row">
+                    <label style="color:#333;">Lista de Produtos:</label>
+                </div>
+                <div class="modal-list-box" id="det-sup-products">
+                    </div>
+                <button class="btn-modal cancel" onclick="document.getElementById('overlay-sup-details').classList.add('hidden')" style="color: #333; border-color: #333; margin-top: 20px; width:100%;">FECHAR</button>
+            </div>
+        </div>
+    </div>
 
     <script src="scripts/shared.js"></script>
     <script src="scripts/fornecedores.js"></script> 

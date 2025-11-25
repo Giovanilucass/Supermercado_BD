@@ -17,10 +17,8 @@
 
     <main class="caixa-content">
         
-        <!-- COLUNA DA ESQUERDA: LISTA DE PRODUTOS -->
         <section class="products-section">
             
-            <!-- Barra de inserção -->
             <div class="add-product-bar">
                 <div class="hash-box">#</div>
                 <input type="text" id="input-prod-code" placeholder="Insira o código do produto manualmente" class="input-product-code">
@@ -31,21 +29,16 @@
                 <button class="btn-add-product" id="btn-add-item"><i class="fas fa-plus"></i></button>
             </div>
 
-            <!-- Cabeçalho da Tabela (Visual) -->
             <div class="cart-header-row">
                 <span style="width: 40%;">Produto</span>
                 <span style="width: 15%; text-align: center;">Preço Un.</span>
                 <span style="width: 15%; text-align: center;">Qtd.</span>
                 <span style="width: 15%; text-align: right;">Total</span>
-                <span style="width: 15%;"></span> <!-- Ações -->
-            </div>
+                <span style="width: 15%;"></span> </div>
 
-            <!-- Lista de Itens (Carrinho) -->
             <div class="products-list" id="cart-list">
-                <!-- Itens injetados via JS -->
-            </div>
+                </div>
 
-            <!-- Rodapé da Lista -->
             <div class="products-footer">
                 <a href="#" class="clear-list-link" id="btn-clear-cart"><i class="fas fa-broom"></i> Limpar lista</a>
                 
@@ -59,12 +52,10 @@
             </div>
         </section>
 
-        <!-- COLUNA DA DIREITA: GESTÃO DE CLIENTES -->
         <aside class="client-sidebar">
             
             <div class="client-panel">
                 
-                <!-- VISTA 1: BUSCA DE CLIENTE (Padrão) -->
                 <div id="client-search-view">
                     <div class="client-header">
                         <h3>VINCULAR CLIENTE À COMPRA</h3>
@@ -78,7 +69,6 @@
                     </div>
                 </div>
 
-                <!-- VISTA 2: CLIENTE VINCULADO -->
                 <div id="client-linked-view" class="hidden">
                     <div class="client-header">
                         <h3>CLIENTE VINCULADO</h3>
@@ -101,7 +91,6 @@
                     </div>
                 </div>
 
-                <!-- VISTA 3: REGISTRO DE CLIENTE -->
                 <div id="client-register-view" class="hidden">
                     <div class="client-header red-bg">
                         <h3>REGISTRAR CLIENTE</h3>
@@ -117,7 +106,6 @@
                             <input type="text" id="reg-cli-name" class="input-sidebar-stock" required>
                         </div>
                         
-                        <!-- Data de Nascimento -->
                         <div class="sidebar-field">
                             <label>Data de nascimento</label>
                             <div class="date-row-sidebar">
@@ -164,20 +152,35 @@
 
     </main>
 
-    <!-- OVERLAY: PAGAMENTO -->
     <div id="overlay-payment" class="modal-overlay hidden">
         <div class="modal-box payment-modal">
             <div style="text-align: center;">
-                <i class="fas fa-check-circle" style="font-size: 60px; color: #4CAF50; margin-bottom: 20px;"></i>
-                <h2>VENDA REALIZADA!</h2>
-                <p style="margin-bottom: 20px;">Pagamento confirmado.</p>
-                <img src="https://i.pinimg.com/originals/83/57/1e/83571efa405fc34a2f8cb03c3656b58d.jpg" alt="Stonks Meme" style="width: 100%; max-width: 250px; border-radius: 8px;">
-                <button class="btn-modal confirm" id="btn-close-payment" style="background-color: #e53935; color: white; border: none; margin-top: 20px; width: 100%;">NOVA VENDA</button>
+                <h2>FORMA DE PAGAMENTO</h2>
+                <p style="margin-bottom: 15px; color: #555;">Selecione como o cliente irá pagar:</p>
+                
+                <select id="payment-method-select" class="input-white" style="width: 100%; margin-bottom: 20px; border: 1px solid #ccc;">
+                    <option value="Dinheiro">Dinheiro</option>
+                    <option value="Pix">Pix</option>
+                    <option value="Cartão de Crédito">Cartão de Crédito</option>
+                    <option value="Cartão de Débito">Cartão de Débito</option>
+                </select>
+
+                <div id="payment-success-view" class="hidden">
+                    <i class="fas fa-check-circle" style="font-size: 60px; color: #4CAF50; margin: 20px 0;"></i>
+                    <h3>VENDA REALIZADA!</h3>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn-modal confirm" id="btn-confirm-payment" style="background-color: #4CAF50; color: white; width: 100%;">CONFIRMAR PAGAMENTO</button>
+                    
+                    <button class="btn-modal cancel" id="btn-cancel-payment" style="color: #333; border-color: #ccc; width: 100%; margin-top: 10px;">CANCELAR</button>
+                    
+                    <button class="btn-modal confirm hidden" id="btn-new-sale" style="background-color: var(--primary-color); color: white; width: 100%;">NOVA VENDA</button>
+                </div>
             </div>
         </div>
     </div>
     
-    <!-- POP-UP: CONFIRMAÇÃO DESVÍNCULO -->
     <div id="overlay-unlink" class="modal-overlay hidden">
         <div class="modal-box delete-modal">
             <h3>Desvincular Cliente?</h3>
@@ -190,7 +193,7 @@
     </div>
 
     <script src="scripts/shared.js"></script>
-	<script src="scripts/caixa.js"></script>
+    <script src="scripts/caixa.js"></script> 
 
 </body>
 </html>

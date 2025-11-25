@@ -4,124 +4,64 @@
     padding: 20px 40px;
     height: calc(100vh - 50px);
     overflow: hidden;
-    background-color: #aaa; /* Fundo mais escuro como na imagem */
+    background-color: #f7f7f7; /* Fundo padrão claro */
 }
 
-.full-width-panel {
-    background-color: #e0e0e0;
-    border-radius: 8px;
-    height: 100%;
+.stock-main-panel {
+    width: 100%;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
 }
 
-/* Barra de Filtros Personalizada (Cinza/Vermelho) */
-.reestoque-filters-bar {
-    background-color: var(--primary-color); /* Vermelho */
-    padding: 10px;
+/* Barra de Filtros em Linha */
+.filter-group-inline {
     display: flex;
     align-items: center;
-    gap: 10px;
-    border-bottom: 4px solid #b71c1c;
+    gap: 5px;
+    background: rgba(255,255,255,0.2);
+    padding: 5px 10px;
+    border-radius: 4px;
 }
 
-.hash-box-red {
-    background-color: #b71c1c;
-    color: white;
-    font-weight: 700;
-    font-size: 18px;
-    width: 35px;
-    height: 35px;
+.filter-label { color: white; font-weight: 700; font-size: 13px; }
+.filter-input.small { width: 80px; text-align: center; }
+.filter-input.medium { width: 130px; }
+
+/* Barra de Ação */
+.action-bar-top {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
-    border-radius: 4px;
+    padding: 10px 0;
 }
 
-.filter-input-wide {
-    flex-grow: 1;
-    padding: 8px 15px;
-    border: none;
-    border-radius: 4px;
-    font-size: 13px;
-    background-color: rgba(255,255,255,0.9);
-}
-
-.filter-btn-wrapper {
-    position: relative;
-}
-
-.btn-gray-filter {
+.total-display-box {
     background-color: #ccc;
-    border: none;
-    padding: 8px 15px;
+    padding: 10px 20px;
     border-radius: 4px;
-    cursor: pointer;
     font-weight: 700;
     color: #333;
-    font-size: 12px;
+    font-size: 14px;
 }
 
-.advanced-filters-box {
-    position: absolute;
-    top: 40px;
-    right: 0;
-    background: white;
-    padding: 15px;
-    border-radius: 4px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-    z-index: 100;
-    width: 250px;
-    border: 1px solid #ccc;
-}
-.advanced-filters-box label { font-size: 11px; font-weight: 700; display: block; margin-top: 5px; }
-.row-mini { display: flex; gap: 5px; margin-bottom: 5px; }
-.row-mini input, .row-mini select { width: 100%; padding: 5px; font-size: 11px; }
-
-.btn-green-add {
-    background-color: #4c8a1e; /* Verde */
-    color: white;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 4px;
-    font-weight: 700;
-    font-size: 12px;
-    cursor: pointer;
-    text-transform: uppercase;
-}
-.btn-green-add:hover { background-color: #3b6e16; }
-
-.total-filtered-box {
-    background-color: #ccc;
-    padding: 8px 15px;
-    border-radius: 4px;
-    font-size: 11px;
-    font-weight: 700;
-    color: #333;
-    white-space: nowrap;
-}
-
-/* Lista de Compras */
+/* Lista */
 .reestoque-list-header {
     display: flex;
-    background-color: #ccc;
+    background-color: #ddd;
     padding: 10px 15px;
     font-weight: 700;
     font-size: 11px;
     color: #333;
+    border-bottom: 2px solid #ccc;
 }
 
-/* Ajustes de Colunas */
-.pur-col-nf { width: 15%; }
-.pur-col-date { width: 15%; }
-.pur-col-sup { width: 20%; font-weight: 700; }
-.pur-col-cnpj { width: 15%; font-size: 11px; color: #555; }
-.pur-col-prod { width: 20%; }
-.pur-col-total { width: 10%; font-weight: 700; }
-.pur-col-btn { width: 5%; text-align: right; }
+/* Colunas */
+.pur-col-nf { width: 15%; font-size: 12px; font-weight: 700; }
+.pur-col-date { width: 15%; font-size: 12px; color: #555; }
+.pur-col-sup { width: 20%; font-weight: 700; font-size: 13px; }
+.pur-col-prod { width: 20%; font-size: 13px; }
+.pur-col-qtd { width: 10%; text-align: center; font-weight: 700; }
+.pur-col-total { width: 10%; text-align: right; font-weight: 900; color: var(--primary-color); }
+.pur-col-btn { width: 10%; text-align: right; }
 
-/* Ajuste Modal Tamanho */
-.purchase-modal-size {
-    width: 500px; /* Mais largo para caber os dados */
-}
+.purchase-modal-size { width: 550px; }

@@ -28,6 +28,13 @@
                 </div>
                 
                 <div class="filters-row-bottom">
+                    <select class="filter-select" id="sort-products" style="margin-right: 10px; font-weight: bold;">
+                        <option value="default">Ordenação Padrão</option>
+                        <option value="sold-desc">Mais Vendidos</option>
+                        <option value="price-asc">Menor Preço</option>
+                        <option value="price-desc">Maior Preço</option>
+                    </select>
+
                     <select class="filter-select" id="filter-category">
                         <option value="">Todas as Categorias</option>
                         <option value="Alimento">Alimento</option>
@@ -40,7 +47,7 @@
                             <input type="checkbox" id="filter-promo">
                             <span class="slider round"></span>
                         </label>
-                        <span class="switch-label">Promoção ativa</span>
+                        <span class="switch-label">Promoção</span>
                     </div>
 
                     <div class="filter-switch-group">

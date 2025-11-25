@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Referências Globais
     let suppliers = window.App.suppliers;
     const { showToast, saveSuppliers } = window.App;
+    let purchases = window.App.purchases || [];
 
     // --- Renderização da Lista ---
     const renderSuppliers = () => {
@@ -39,7 +40,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <label>E-mail</label>
                     <input type="text" value="${s.email}" readonly class="stock-input">
                 </div>
-                <div class="sup-col-btn">
+                
+                <div class="sup-col-btn" style="display:flex; gap:5px; justify-content: flex-end;">
+                    <button class="btn-edit-stock" style="background-color: #555;" onclick="openSupplierDetails(${s.id})">
+                        <i class="fas fa-eye"></i>
+                    </button>
                     <button class="btn-edit-stock" onclick="openEditSupplierModal(${s.id})">
                         <i class="fas fa-pen"></i>
                     </button>
@@ -53,14 +58,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Listeners de Filtro
     document.getElementById('btn-filter-trigger')?.addEventListener('click', renderSuppliers);
     document.querySelectorAll('.filter-input').forEach(input => {
         input.addEventListener('input', renderSuppliers);
     });
     renderSuppliers();
+    
+    // --- Detalhes Fornecedor (Produtos) ---
+    window.openSupplierDetails = (id) => {
+        const s = suppliers.find(x => x.id === id);
+        if(!s) return;
+        document.getElementById('det-sup-name').value = s.name;
+        
+        const list = document.getElementById('det-sup-products');
+        list.innerHTML = '';
+        
+        // Filtra compras feitas com este CNPJ (ou nome)
+        const supplied = purchases.filter(p => p.supplierCnpj === s.cnpj || p.supplierName === s.name);
+        
+        if (supplied.length > 0) {
+            // Remove duplicatas de produtos visualmente
+            const uniqueProducts = [...new Set(supplied.map(item => item.productName))];
+            uniqueProducts.forEach(prod => {
+                list.innerHTML += `<div class="modal-list-item"><i class="fas fa-box"></i> ${prod}</div>`;
+            });
+        } else {
+            list.innerHTML = '<div class="modal-list-item" style="color:#777;">Nenhum produto registrado em compras recentes.</div>';
+        }
+        
+        document.getElementById('overlay-sup-details').classList.remove('hidden');
+    };
 
-    // --- Registrar Fornecedor (Sidebar) ---
+    // --- Registrar Fornecedor ---
     const btnOpen = document.getElementById('btn-abrir-form-sup');
     const btnCancel = document.getElementById('btn-cancel-sup-reg');
     const viewDef = document.getElementById('sup-default-view');
@@ -96,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             suppliers.push(newSupplier);
-            saveSuppliers(); // Global save
+            saveSuppliers();
             renderSuppliers();
             showToast('Fornecedor inserido com sucesso!');
             formReg.reset();
@@ -130,8 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (idx > -1) {
             suppliers[idx].name = document.getElementById('edit-sup-name').value;
             suppliers[idx].email = document.getElementById('edit-sup-email').value;
-            // CNPJ é readonly, não atualiza
-
+            
             saveSuppliers();
             renderSuppliers();
             showToast('Fornecedor editado com sucesso!');
@@ -145,17 +173,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnConfirmDelete = document.getElementById('btn-confirm-delete');
     const btnCancelDelete = document.getElementById('btn-cancel-delete');
 
-    // Abre modal delete
     btnDeleteInit?.addEventListener('click', () => {
         deleteOverlay.classList.remove('hidden');
     });
 
-    // Fecha modal delete
     btnCancelDelete?.addEventListener('click', () => {
         deleteOverlay.classList.add('hidden');
     });
 
-    // Clonar botão de confirmar para evitar conflito de listeners
     const newBtnConfirm = btnConfirmDelete.cloneNode(true);
     btnConfirmDelete.parentNode.replaceChild(newBtnConfirm, btnConfirmDelete);
 
@@ -172,5 +197,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
 });

@@ -20,11 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const yearMax = parseInt(document.getElementById('filter-year-max')?.value) || 9999;
 
         const filtered = clients.filter(c => {
-            // Filtro Nome e CPF
             const matchName = c.name.toLowerCase().includes(nameFilter);
             const matchCpf = c.cpf.includes(cpfFilter);
             
-            // Filtro Ano de Nascimento
             let matchYear = true;
             if (c.dob) {
                 const parts = c.dob.split('/'); // DD/MM/YYYY
@@ -39,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         filtered.forEach(c => {
             const row = document.createElement('div');
-            row.className = 'stock-item-row'; // Reutilizando classe de linha
+            row.className = 'stock-item-row';
             row.innerHTML = `
                 <div class="stock-field-group cli-col-name">
                     <label>Nome</label>
@@ -53,7 +51,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     <label>Data de Nascimento</label>
                     <input type="text" value="${c.dob || '--/--/----'}" readonly class="stock-input">
                 </div>
-                <div class="cli-col-btn">
+                
+                <div class="cli-col-btn" style="display: flex; gap: 5px; justify-content: flex-end;">
+                    <button class="btn-edit-stock" style="background-color: #555;" onclick="openClientDetails(${c.id})">
+                        <i class="fas fa-eye"></i>
+                    </button>
                     <button class="btn-edit-stock" onclick="openEditClientModal(${c.id})">
                         <i class="fas fa-pen"></i>
                     </button>
@@ -67,14 +69,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Listeners de Filtro
     document.getElementById('btn-filter-trigger')?.addEventListener('click', renderClients);
     document.querySelectorAll('.filter-input').forEach(input => {
         input.addEventListener('input', renderClients);
     });
     renderClients();
 
-    // --- Registrar Cliente (Sidebar) ---
+    // --- Função de Detalhes (Olho) ---
+    window.openClientDetails = (id) => {
+        const c = clients.find(x => x.id === id);
+        if(!c) return;
+        document.getElementById('det-cli-name').value = c.name;
+        document.getElementById('det-cli-cpf').value = c.cpf;
+        
+        const list = document.getElementById('det-cli-phones');
+        list.innerHTML = '';
+        
+        let hasPhone = false;
+        if(c.phone1) {
+            list.innerHTML += `<div class="modal-list-item"><strong>${c.type1 || 'Telefone'}:</strong> ${c.phone1}</div>`;
+            hasPhone = true;
+        }
+        if(c.phone2) {
+            list.innerHTML += `<div class="modal-list-item"><strong>${c.type2 || 'Telefone'}:</strong> ${c.phone2}</div>`;
+            hasPhone = true;
+        }
+        
+        if(!hasPhone) {
+            list.innerHTML = '<div class="modal-list-item" style="color:#777;">Nenhum telefone cadastrado.</div>';
+        }
+        
+        document.getElementById('overlay-cli-details').classList.remove('hidden');
+    };
+
+    // --- Registrar Cliente ---
     const btnOpen = document.getElementById('btn-abrir-form-cli');
     const btnCancel = document.getElementById('btn-cancel-cli-reg');
     const viewDef = document.getElementById('cli-default-view');
@@ -92,7 +120,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const mm = document.getElementById('reg-cli-mm').value;
         const yyyy = document.getElementById('reg-cli-yyyy').value;
         
-        // CPF, Nome e Data são obrigatórios
         if(cpf && name && dd && mm && yyyy) btnConfirm.disabled = false;
         else btnConfirm.disabled = true;
     };
@@ -117,7 +144,7 @@ document.addEventListener('DOMContentLoaded', () => {
             };
 
             clients.push(newClient);
-            saveClients(); // Global save
+            saveClients();
             renderClients();
             showToast('Cliente inserido com sucesso!');
             formReg.reset();
@@ -181,33 +208,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- Deletar Cliente (Lógica no shared.js ou aqui) ---
-    // Como o shared.js tem a lógica genérica de delete, precisamos apenas configurar o botão de delete
+    // --- Deletar Cliente ---
     const btnDeleteInit = document.getElementById('btn-cli-delete-init');
     const deleteOverlay = document.getElementById('overlay-delete');
-    
-    // Precisamos injetar a lógica específica de delete para cliente
-    // NOTA: O shared.js lida com 'product' e 'employee'. Precisamos adicionar 'client' aqui ou lá.
-    // Para simplificar e não mexer no shared.js novamente, faremos a lógica de delete localmente aqui.
-    
     const btnConfirmDelete = document.getElementById('btn-confirm-delete');
     const btnCancelDelete = document.getElementById('btn-cancel-delete');
 
-    // Abre modal
     btnDeleteInit?.addEventListener('click', () => {
         deleteOverlay.classList.remove('hidden');
     });
 
-    // Fecha modal
     btnCancelDelete?.addEventListener('click', () => {
         deleteOverlay.classList.add('hidden');
     });
 
-    // Ação de Confirmar (Precisamos sobrescrever ou adicionar listener com cuidado)
-    // Uma abordagem segura é usar uma variável global de controle no shared, mas aqui faremos local.
-    
-    // Hack: Vamos remover listeners antigos do botão confirm clonando-o, para evitar conflito com estoque.js
-    // Em um projeto real, isso seria centralizado.
+    // Clonagem para isolar evento de delete (evitar conflitos)
     const newBtnConfirm = btnConfirmDelete.cloneNode(true);
     btnConfirmDelete.parentNode.replaceChild(newBtnConfirm, btnConfirmDelete);
 
@@ -224,5 +239,4 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     });
-
 });

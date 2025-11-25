@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Login Guard
     const isLoginPage = path.includes('index.html') || path === '/' || path.endsWith('/');
-    
     if (!isLoginPage && !userCpf) {
         window.location.href = 'index.html';
         return;
@@ -24,9 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     links.forEach(l => {
                         l.classList.remove('active');
-                        if (path.includes('estoque.html') && !path.includes('reestoque.html') && l.innerText === 'ESTOQUE') {
-                            l.classList.add('active');
-                        }
+                        if (path.includes('estoque.html') && !path.includes('reestoque.html') && l.innerText === 'ESTOQUE') l.classList.add('active');
                         if (path.includes('caixa.html') && l.innerText === 'CAIXA') l.classList.add('active');
                         if (path.includes('funcionarios.html') && l.innerText === 'FUNCIONÁRIOS') l.classList.add('active');
                         if (path.includes('fluxo.html') && l.innerText === 'FLUXO') l.classList.add('active');
@@ -35,7 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (path.includes('reestoque.html') && l.innerText === 'REESTOCAR') l.classList.add('active');
                     });
                 }
-            });
+            })
+            .catch(err => console.error("Erro header:", err));
     }
 });
 
@@ -47,7 +45,7 @@ const loadData = (key, defaultData) => {
         if (!data || data === "undefined") return defaultData;
         return JSON.parse(data);
     } catch (e) {
-        console.error(`Erro ao carregar dados de ${key}`, e);
+        console.error(`Erro ao carregar ${key}`, e);
         return defaultData;
     }
 };
@@ -56,16 +54,16 @@ const saveData = (key, data) => {
     try {
         localStorage.setItem(key, JSON.stringify(data));
     } catch (e) {
-        console.error("Erro ao salvar dados", e);
-        alert("Erro ao salvar. Armazenamento cheio?");
+        console.error("Erro ao salvar", e);
+        alert("Erro de armazenamento.");
     }
 };
 
-// DADOS PADRÃO
+// Dados Padrão (COM CAMPOS DE ORDENAÇÃO RESTAURADOS)
 const defaultProducts = [
-    { id: 1, code: '123', name: 'Biscoito Bauducco', price: 5.00, category: 'Alimento', promo: 0, ending: false, qtd: 50 },
-    { id: 2, code: '456', name: 'Detergente Ypê', price: 2.50, category: 'Limpeza', promo: 10, ending: true, qtd: 5 },
-    { id: 3, code: '789', name: 'Coca-Cola 2L', price: 8.00, category: 'Alimento', promo: 0, ending: false, qtd: 30 }
+    { id: 1, code: '123', name: 'Biscoito Bauducco', price: 5.00, category: 'Alimento', promo: 0, ending: false, qtd: 50, sold: 1200 },
+    { id: 2, code: '456', name: 'Detergente Ypê', price: 2.50, category: 'Limpeza', promo: 10, ending: true, qtd: 5, sold: 850 },
+    { id: 3, code: '789', name: 'Coca-Cola 2L', price: 8.00, category: 'Alimento', promo: 0, ending: false, qtd: 30, sold: 5000 }
 ];
 
 const defaultClients = [
@@ -74,8 +72,8 @@ const defaultClients = [
 ];
 
 const defaultEmployees = [
-    { id: 1, cpf: '123.456.789-00', name: 'Fábio Júnior', salary: 2500.00, turno: 'Matutino', cargo: 'Gerente', dob: '10/05/1980', supervisor: '-' },
-    { id: 2, cpf: '987.654.321-11', name: 'Ana Maria', salary: 1400.00, turno: 'Vespertino', cargo: 'Caixa', dob: '22/08/1995', supervisor: '123.456.789-00' }
+    { id: 1, cpf: '123.456.789-00', name: 'Fábio Júnior', salary: 2500.00, turno: 'Matutino', cargo: 'Gerente', dob: '10/05/1980', supervisor: '-', salesCount: 15 },
+    { id: 2, cpf: '987.654.321-11', name: 'Ana Maria', salary: 1400.00, turno: 'Vespertino', cargo: 'Caixa', dob: '22/08/1995', supervisor: '123.456.789-00', salesCount: 342 }
 ];
 
 const defaultSuppliers = [
@@ -83,7 +81,6 @@ const defaultSuppliers = [
     { id: 2, cnpj: '98.765.432/0001-00', name: 'Ypê Distribuidora', email: 'vendas@ype.com.br' }
 ];
 
-// NOVO: Dados de Compras (Reestoque)
 const defaultPurchases = [
     { 
         id: 1, nf: '4440001', date: '2025-11-19', time: '10:30:00', 
@@ -98,13 +95,13 @@ window.App = {
     clients: loadData('db_clients', defaultClients),
     employees: loadData('db_employees', defaultEmployees),
     suppliers: loadData('db_suppliers', defaultSuppliers),
-    purchases: loadData('db_purchases', defaultPurchases), // NOVO
+    purchases: loadData('db_purchases', defaultPurchases),
 
     saveProducts: () => saveData('db_products', window.App.products),
     saveClients: () => saveData('db_clients', window.App.clients),
     saveEmployees: () => saveData('db_employees', window.App.employees),
     saveSuppliers: () => saveData('db_suppliers', window.App.suppliers),
-    savePurchases: () => saveData('db_purchases', window.App.purchases), // NOVO
+    savePurchases: () => saveData('db_purchases', window.App.purchases),
 
     formatMoney: (val) => {
         if (val === undefined || val === null) return "0,00";
@@ -134,12 +131,16 @@ window.App = {
     }
 };
 
-// Migration IDs
-['clients', 'suppliers', 'purchases'].forEach(key => {
-    if (window.App[key]) {
-        window.App[key].forEach((item, i) => { if (!item.id) item.id = Date.now() + i; });
-        if(key === 'clients') window.App.saveClients();
-        if(key === 'suppliers') window.App.saveSuppliers();
-        if(key === 'purchases') window.App.savePurchases();
+// Correção automática para garantir campos de ordenação em dados antigos
+['clients', 'suppliers', 'purchases', 'products', 'employees'].forEach(key => {
+    if (window.App[key] && Array.isArray(window.App[key])) {
+        window.App[key].forEach((item, i) => { 
+            if (item && !item.id) item.id = Date.now() + i; 
+            if (key === 'products' && item.sold === undefined) item.sold = 0;
+            if (key === 'employees' && item.salesCount === undefined) item.salesCount = 0;
+        });
+        // Salva para persistir a correção
+        if(key === 'products') window.App.saveProducts();
+        if(key === 'employees') window.App.saveEmployees();
     }
 });
