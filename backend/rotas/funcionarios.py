@@ -19,8 +19,7 @@ def listar_funcionarios():
     # "padrao", "vendas", "salario"
     ordenacao = request.args.get("ordenacao", "padrao") 
 
-    service = funcionariosDB()
-    resultados = service.buscar_funcionarios(nome, cpf, turno, cargo, cpf_supervisor, data_min, data_max, ordenacao)
+    resultados = funcionariosDB().buscar_funcionarios(nome, cpf, turno, cargo, cpf_supervisor, data_min, data_max, ordenacao)
     
     return jsonify(resultados), 200
 
@@ -31,15 +30,13 @@ def obter_funcionario():
     if not cpf:
         return jsonify({"erro": "CPF obrigatório"}), 400
 
-    service = funcionariosDB()
-    func = service.get_funcionario_por_cpf(cpf)
+    func = funcionariosDB().get_funcionario_por_cpf(cpf)
     
     if not func:
         return jsonify({"erro": "Funcionário não encontrado"}), 404
     
     return jsonify(func), 200
 
-# --- CRIAR ---
 @funcionarios_blueprint.route("/funcionarios", methods=["POST"])
 def criar_funcionario():
     data = request.get_json()
@@ -48,15 +45,13 @@ def criar_funcionario():
     if not data.get("cpf") or not data.get("nome") or not data.get("salario"):
         return jsonify({"erro": "Campos obrigatórios faltando"}), 400
 
-    service = funcionariosDB()
-    resultado = service.criar_funcionario(data)
+    resultado = funcionariosDB().criar_funcionario(data)
     
     if "erro" in resultado:
         return jsonify(resultado), 400
     
     return jsonify(resultado), 201
 
-# --- ATUALIZAR ---
 @funcionarios_blueprint.route("/funcionarios", methods=["PUT"])
 def atualizar_funcionario():
     data = request.get_json()
@@ -65,15 +60,13 @@ def atualizar_funcionario():
     if not cpf_alvo:
         return jsonify({"erro": "CPF obrigatório"}), 400
 
-    service = funcionariosDB()
-    resultado = service.atualizar_funcionario(cpf_alvo, data)
+    resultado = funcionariosDB().atualizar_funcionario(cpf_alvo, data)
     
     if "erro" in resultado:
         return jsonify(resultado), 400
         
     return jsonify(resultado), 200
 
-# --- DELETAR ---
 @funcionarios_blueprint.route("/funcionarios", methods=["DELETE"])
 def deletar_funcionario():
     data = request.get_json()
@@ -82,8 +75,7 @@ def deletar_funcionario():
     if not cpf:
         return jsonify({"erro": "CPF obrigatório"}), 400
 
-    service = funcionariosDB()
-    resultado = service.deletar_funcionario(cpf)
+    resultado = funcionariosDB().deletar_funcionario(cpf)
     
     if "erro" in resultado:
         return jsonify(resultado), 400
