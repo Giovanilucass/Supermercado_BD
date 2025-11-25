@@ -7,7 +7,7 @@ class funcionariosDB:
         self.db = DatabaseManager()
 
     def converter_data(self, data_str):
-        """Converte DD/MM/YYYY para YYYY-MM-DD"""
+        #Converte DD/MM/YYYY para YYYY-MM-DD
         if not data_str: return None
         try:
             return datetime.strptime(data_str, "%d/%m/%Y").strftime("%Y-%m-%d")
@@ -15,26 +15,22 @@ class funcionariosDB:
             return None 
 
     def limpar_moeda(self, valor_str):
-        """Converte 'R$ 1.400,50' para 1400.50"""
-        if not valor_str: return 0.00
-        if isinstance(valor_str, (int, float)): return valor_str
-        
-        # Remove R$, espaços e pontos de milhar
+        #Converte 'R$ 1.400,50' para 1400.50
+        if not valor_str: 
+            return 0.00
+        if isinstance(valor_str, (int, float)): 
+            return valor_str
         limpo = valor_str.replace("R$", "").replace(" ", "").replace(".", "")
-        # Troca a vírgula decimal por ponto
         limpo = limpo.replace(",", ".")
         try:
             return float(limpo)
         except:
             return 0.00
 
-    # --- LISTAGEM COM FILTROS E ORDENAÇÃO (TELA 1) ---
     def buscar_funcionarios(self, nome=None, cpf=None, turno=None, cargo=None, cpf_supervisor=None, data_min=None, data_max=None, ordenacao="padrao"):
         con = self.db.conn
         cursor = con.cursor()
 
-        # Base da Query
-        # Se a ordenação for por vendas, precisamos fazer um LEFT JOIN
         if ordenacao == "vendas":
             sql = """
                 SELECT f.CPF, f.Nome, f.Turno, f.Salario, 
@@ -56,7 +52,6 @@ class funcionariosDB:
         
         params = []
 
-        # --- FILTROS DINÂMICOS ---
         if nome:
             sql += " AND f.Nome ILIKE %s" if ordenacao == "vendas" else " AND Nome ILIKE %s"
             params.append(f"%{nome}%")
@@ -89,19 +84,17 @@ class funcionariosDB:
                 sql += " AND f.Data_Nascimento <= %s" if ordenacao == "vendas" else " AND Data_Nascimento <= %s"
                 params.append(dt)
 
-        # --- ORDENAÇÃO ---
         if ordenacao == "vendas":
             sql += " GROUP BY f.CPF ORDER BY total_vendas DESC"
         elif ordenacao == "salario":
             sql += " ORDER BY Salario DESC"
         else:
-            sql += " ORDER BY Nome ASC" # Padrão
+            sql += " ORDER BY Nome ASC"
 
         cursor.execute(sql, tuple(params))
         colunas = [desc[0] for desc in cursor.description]
         return [dict(zip(colunas, row)) for row in cursor.fetchall()]
 
-    # --- BUSCA INDIVIDUAL ---
     def get_funcionario_por_cpf(self, cpf):
         con = self.db.conn
         cursor = con.cursor()
@@ -116,17 +109,16 @@ class funcionariosDB:
         colunas = [desc[0] for desc in cursor.description]
         return dict(zip(colunas, res))
 
-    # --- CRIAR FUNCIONÁRIO ---
     def criar_funcionario(self, dados):
         cpf = dados.get("cpf")
         nome = dados.get("nome")
         turno = dados.get("turno")
         cargo = dados.get("cargo")
-        # Conversões
+    
         salario = self.limpar_moeda(dados.get("salario"))
         data_nasc = self.converter_data(dados.get("data_nascimento"))
         
-        # Supervisor: Se vier vazio, manda NULL (None) pro banco
+        
         cpf_supervisor = dados.get("cpf_supervisor")
         if not cpf_supervisor or cpf_supervisor.strip() == "":
             cpf_supervisor_val = "NULL"
@@ -137,7 +129,6 @@ class funcionariosDB:
         cursor = con.cursor()
 
         try:
-            # Usando f-string conforme solicitado para INSERT
             query = f"""
                 INSERT INTO Funcionario (CPF, Nome, Turno, Salario, Data_Nascimento, Cargo, CPF_Supervisor)
                 VALUES ('{cpf}', '{nome}', '{turno}', {salario}, '{data_nasc}', '{cargo}', {cpf_supervisor_val})
@@ -156,13 +147,12 @@ class funcionariosDB:
             con.rollback()
             return {"erro": f"Erro ao criar: {str(e)}"}
 
-    # --- ATUALIZAR FUNCIONÁRIO ---
+
     def atualizar_funcionario(self, cpf_original, dados):
         nome = dados.get("nome")
         turno = dados.get("turno")
         cargo = dados.get("cargo")
         
-        # Conversões
         salario = self.limpar_moeda(dados.get("salario"))
         
         data_nasc = dados.get("data_nascimento")
@@ -196,14 +186,11 @@ class funcionariosDB:
             con.rollback()
             return {"erro": f"Erro ao atualizar: {str(e)}"}
 
-    # --- DELETAR FUNCIONÁRIO ---
     def deletar_funcionario(self, cpf):
         con = self.db.conn
         cursor = con.cursor()
 
         try:
-            # Graças ao 'ON DELETE SET NULL' na tabela Funcionario (Supervisor) e Compra_Cliente,
-            # podemos deletar sem medo de quebrar referências (elas viram NULL).
             cursor.execute(f"DELETE FROM Funcionario WHERE CPF = '{cpf}'")
             con.commit()
             

@@ -15,13 +15,10 @@ class produtosDB:
         except:
             return 0.00
 
-    # --- LISTAGEM COM FILTROS E ORDENAÇÃO (TELA PRINCIPAL) ---
     def buscar_produtos(self, nome=None, codigo=None, categoria=None, promocao=None, acabando=None, ordenacao="padrao"):
         con = self.db.conn
         cursor = con.cursor()
 
-        # Base da Query
-        # Se a ordenação for "mais_vendidos", precisamos do JOIN com a tabela Abarca
         if ordenacao == "mais_vendidos":
             sql = """
                 SELECT p.Codigo, p.Nome, p.Preco, p.Estoque, p.Limite_inferior, p.Categoria, p.Promocao,
@@ -39,7 +36,6 @@ class produtosDB:
         
         params = []
 
-        # --- FILTROS DINÂMICOS ---
         prefixo = "p." if ordenacao == "mais_vendidos" else ""
 
         if nome:
@@ -47,7 +43,6 @@ class produtosDB:
             params.append(f"%{nome}%")
         
         if codigo:
-            # Se o usuário digitar código, busca exato
             sql += f" AND {prefixo}Codigo = %s"
             params.append(codigo)
 
@@ -55,15 +50,12 @@ class produtosDB:
             sql += f" AND {prefixo}Categoria = %s"
             params.append(categoria)
 
-        # Filtro Toggle "Promoção" (Se estiver ativo, traz só quem tem desconto > 0)
         if promocao == "true":
             sql += f" AND {prefixo}Promocao > 0"
 
-        # Filtro Toggle "Acabando" (Estoque <= Limite Inferior)
         if acabando == "true":
             sql += f" AND {prefixo}Estoque <= {prefixo}Limite_inferior"
 
-        # --- ORDENAÇÃO ---
         if ordenacao == "mais_vendidos":
             sql += " GROUP BY p.Codigo ORDER BY total_vendido DESC"
         elif ordenacao == "menor_preco":
@@ -77,7 +69,6 @@ class produtosDB:
         colunas = [desc[0] for desc in cursor.description]
         return [dict(zip(colunas, row)) for row in cursor.fetchall()]
 
-    # --- BUSCA INDIVIDUAL (PARA EDIÇÃO) ---
     def get_produto_por_codigo(self, codigo):
         con = self.db.conn
         cursor = con.cursor()
@@ -92,10 +83,7 @@ class produtosDB:
         colunas = [desc[0] for desc in cursor.description]
         return dict(zip(colunas, res))
 
-    # --- CRIAR PRODUTO (TELA DE REGISTRO) ---
     def criar_produto(self, dados):
-        # Nota: O campo "Codigo" da tela de registro é automático (serial), 
-        # então ignoramos o que vem do front ou geramos placeholder.
         nome = dados.get("nome")
         categoria = dados.get("categoria")
         preco = self._limpar_moeda(dados.get("preco"))
@@ -107,7 +95,6 @@ class produtosDB:
         cursor = con.cursor()
 
         try:
-            # Usando f-string para INSERT conforme solicitado
             query = f"""
                 INSERT INTO Produto (Nome, Preco, Estoque, Limite_inferior, Categoria, Promocao)
                 VALUES ('{nome}', {preco}, {estoque}, {limite}, '{categoria}', 0)
@@ -120,17 +107,12 @@ class produtosDB:
             con.rollback()
             return {"erro": f"Erro ao criar produto: {str(e)}"}
 
-    # --- ATUALIZAR PRODUTO (MODAL) ---
     def atualizar_produto(self, codigo, dados):
         nome = dados.get("nome")
         categoria = dados.get("categoria")
         preco = self._limpar_moeda(dados.get("preco"))
         promocao = int(dados.get("promocao", 0))
         estoque = int(dados.get("estoque"))
-        
-        # Se vier limite inferior no JSON usa, senão mantém o atual (opcional)
-        # Aqui assumo que o modal pode enviar ou manter o do banco.
-        # Para simplificar, vou atualizar apenas o que está na tela da imagem 3 (Modal).
         
         con = self.db.conn
         cursor = con.cursor()
@@ -152,10 +134,8 @@ class produtosDB:
             con.rollback()
             return {"erro": f"Erro ao atualizar: {str(e)}"}
 
-    # --- DELETAR PRODUTO (SOFT DELETE) ---
     def deletar_produto(self, codigo):
-        # Como produtos têm histórico de vendas, NÃO usamos DELETE.
-        # Usamos Soft Delete (Ativo = FALSE) para sumir da lista mas manter histórico.
+        # Como produtos têm histórico de vendas, NÃO usamos DELETE, usamos tipo um Soft Delete (Ativo = FALSE)
         con = self.db.conn
         cursor = con.cursor()
 

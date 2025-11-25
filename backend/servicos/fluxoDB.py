@@ -15,19 +15,12 @@ class fluxoDB:
 
     def _limpar_moeda(self, valor_str):
         if not valor_str: return 0.00
-        # Se for float, já retorna
         if isinstance(valor_str, (int, float)): return valor_str
-        # Limpa R$, espaços e pontos
         return float(str(valor_str).replace("R$", "").replace(" ", "").replace(".", "").replace(",", "."))
 
-    # --- LISTAGEM DO FLUXO UNIFICADO ---
     def buscar_fluxo(self, nf=None, valor_min=None, valor_max=None, data_min=None, data_max=None):
         con = self.db.conn
         cursor = con.cursor()
-
-        # Vamos usar UNION ALL para juntar Vendas (Entrada de $$) e Compras (Saída de $$)
-        # Tipo 'E' = Entrada (Venda ao Cliente)
-        # Tipo 'S' = Saída (Pagamento ao Fornecedor)
         
         sql = """
             SELECT * FROM (
@@ -57,7 +50,6 @@ class fluxoDB:
         params = []
 
         if nf:
-            # NF é BIGINT, garantimos que é numérico
             sql += " AND fluxo.NF = %s"
             params.append(nf)
 
@@ -87,7 +79,6 @@ class fluxoDB:
         colunas = [desc[0] for desc in cursor.description]
         resultados = [dict(zip(colunas, row)) for row in cursor.fetchall()]
 
-        # Calcular Totais para os Cards
         total_entradas = sum(item['valor'] for item in resultados if item['tipo'] == 'E')
         total_saidas = sum(item['valor'] for item in resultados if item['tipo'] == 'S')
         lucro = total_entradas - total_saidas
@@ -101,13 +92,11 @@ class fluxoDB:
             }
         }
 
-    # --- DETALHES DA TRANSAÇÃO (MODAL) ---
     def get_detalhes_transacao(self, nf, tipo):
         con = self.db.conn
         cursor = con.cursor()
         
-        if tipo == 'E': # Entrada (Venda ao Cliente)
-            # 1. Dados da Nota
+        if tipo == 'E':
             cursor.execute("""
                 SELECT c.NF, to_char(c.Data_Hora, 'YYYY-MM-DD HH24:MI:SS'), c.Forma_Pagamento, 'Venda ao Cliente', c.Valor_Total
                 FROM Compra_Cliente c WHERE c.NF = %s
@@ -115,7 +104,6 @@ class fluxoDB:
             nota = cursor.fetchone()
             if not nota: return None
 
-            # 2. Itens (Tabela Abarca)
             cursor.execute("""
                 SELECT p.Nome, a.Quantidade, p.Preco
                 FROM Abarca a
@@ -124,8 +112,7 @@ class fluxoDB:
             """, (nf,))
             itens = [{"produto": row[0], "qtd": row[1], "preco": row[2]} for row in cursor.fetchall()]
 
-        elif tipo == 'S': # Saída (Compra do Fornecedor)
-            # 1. Dados da Nota
+        elif tipo == 'S':
             cursor.execute("""
                 SELECT v.NF, to_char(v.Data_Hora, 'YYYY-MM-DD HH24:MI:SS'), 'Boleto/Fatura', f.Nome, v.Preco
                 FROM Venda_Fornecedor v
@@ -135,7 +122,6 @@ class fluxoDB:
             nota = cursor.fetchone()
             if not nota: return None
 
-            # 2. Itens (Tabela Inclui)
             cursor.execute("""
                 SELECT p.Nome, i.Quantidade, i.Preco_Venda_Fornecedor
                 FROM Inclui i
