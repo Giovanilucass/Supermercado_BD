@@ -1,0 +1,250 @@
+/* --- Conteúdo Principal (Main) --- */
+.main-content {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-start;
+    padding: 60px 100px;
+    flex-grow: 1;
+}
+
+/* Seção de Branding (Logo e Títulos) */
+.branding {
+    text-align: left;
+    padding-top: 50px;
+}
+
+/* Título Principal (SUPERMERCADO) - Branco com BORDA PRETA */
+.branding > h1:first-child {
+    font-size: 32px; 
+    color: var(--secondary-color); /* Cor interna Branca */
+    font-weight: 900; /* Peso extra para a borda ficar bonita */
+    line-height: 1;
+    letter-spacing: 2px;
+    margin-bottom: 0;
+    /* AQUI ESTÁ A MÁGICA DA BORDA: */
+    -webkit-text-stroke: 2px var(--tertiary-color); /* Borda de 1px preta */
+    paint-order: stroke fill; /* Garante que a borda não "coma" o texto branco */
+}
+
+/* Título Principal (VOLTANTE) - Preto Sólido */
+.branding > h1:last-child {
+    font-size: 24px; 
+    color: var(--tertiary-color); 
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: 2px;
+    margin-top: 5px;
+}
+
+/* Container da Logo Grande */
+.main-logo-container {
+    width: 200px; 
+    height: 200px; 
+    margin: 30px 0 0;
+    position: relative;
+}
+
+/* Wrapper da logo (triângulo removido) */
+.logo-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    /* O bloco ::before foi removido daqui */
+}
+
+.main-logo-image {
+    width: 110%; 
+    height: 110%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1; 
+    filter: drop-shadow(0 0 5px rgba(0, 0, 0, 0.5)); 
+}
+
+
+/* --- Painel de Login (Aside) --- */
+.login-panel {
+    width: 380px;
+    background-color: var(--secondary-color);
+    border: 1px solid #ddd; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    padding: 0;
+}
+
+.panel-header {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    padding: 20px;
+    text-align: center;
+}
+
+.panel-header h2 {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.login-form {
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px; 
+}
+
+.label-cpf {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--tertiary-color);
+    margin-bottom: -5px;
+    text-align: left;
+}
+
+.input-cpf {
+    padding: 12px 10px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+.input-cpf:focus {
+    border-color: var(--primary-color);
+    outline: none;
+}
+
+.input-cpf::placeholder {
+    color: #999;
+}
+
+.btn {
+    padding: 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 700;
+    text-transform: uppercase;
+    transition: background-color 0.3s;
+}
+
+.btn-confirmar {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    margin-top: 15px;
+}
+
+.btn-confirmar:hover {
+    background-color: #c62828; 
+}
+
+.btn-registrar {
+    background-color: var(--primary-color);
+    color: var(--secondary-color);
+    margin-top: 5px;
+}
+
+.btn-registrar:hover {
+    background-color: #c62828;
+}
+
+/* --- ESTILOS DO MODO REGISTRO --- */
+
+/* Modificação do painel principal quando estiver no modo registro */
+.login-panel.mode-register {
+    background-color: var(--primary-color); /* Fica tudo vermelho */
+    border: none;
+}
+
+/* Cabeçalho do Registro */
+.panel-header-register {
+    color: var(--secondary-color);
+    padding: 20px 20px 10px 20px;
+    text-align: center;
+}
+
+.panel-header-register h2 {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* Formulário de Registro */
+.register-form {
+    padding: 10px 30px 30px 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    color: var(--secondary-color); /* Texto branco */
+}
+
+.register-form label {
+    font-size: 12px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 2px;
+}
+
+/* Inputs do Registro (Brancos) */
+.input-register {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    height: 35px;
+}
+
+.input-register:focus {
+    outline: 2px solid #ff8a80; /* Destaque sutil ao focar */
+}
+
+/* Container de Salário para o R$ */
+.salary-wrapper {
+    position: relative;
+}
+
+.currency-symbol {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #333;
+    font-weight: 700;
+    font-size: 14px;
+}
+
+/* Linhas com multiplos inputs (Turno/Cargo e Datas) */
+.form-row {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.half {
+    width: 48%;
+}
+
+.date-row {
+    display: flex;
+    gap: 10px;
+}
+
+.date-field {
+    text-align: center;
+}
+
+/* Botões Brancos (Para o fundo vermelho) */
+.btn-white {
+    background-color: var(--secondary-color);
+    color: var(--primary-color); /* Texto Vermelho */
+    font-weight: 700;
+    margin-top: 5px;
+    border: none;
+    text-transform: uppercase;
+}
+
+.btn-white:hover {
+    background-color: #f0f0f0;
+}
