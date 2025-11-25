@@ -1,0 +1,7 @@
+/* --- ESTILOS ESPECÍFICOS DO ESTOQUE --- */
+
+/* Larguras das colunas */
+.code-col { width: 20%; }
+.name-col { width: 35%; }
+.price-col { width: 20%; } 
+.cat-col { width: 20%; }

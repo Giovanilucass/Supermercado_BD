@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Supermercado Voltante - Funcionários</title>
+    <link rel="stylesheet" href="styles/global.css">
+    <link rel="stylesheet" href="styles/funcionarios.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <header class="header"></header> 
+    <div id="toast-container"></div>
+    <main class="estoque-content"> 
+        <section class="stock-main-panel">
+            <div class="stock-filters-bar">
+                <div class="filters-row-top full-width">
+                    <div class="hash-icon">#</div>
+                    <input type="text" id="filter-emp-name" placeholder="Inserir Nome do Funcionário" class="filter-input big">
+                    <input type="text" id="filter-emp-cpf" placeholder="Inserir CPF do Funcionário" class="filter-input medium">
+                    
+                    <select id="sort-emp" class="filter-select" style="margin-left: 10px; font-weight: bold;">
+                        <option value="default">Ordenação Padrão</option>
+                        <option value="sales-desc">Mais Vendas</option>
+                        <option value="salary-desc">Maior Salário</option>
+                    </select>
+
+                    <button class="btn-search-stock" id="btn-filter-trigger"><i class="fas fa-search"></i></button>
+                </div>
+                <div class="filters-row-bottom space-between">
+                    <select id="filter-emp-turno" class="filter-select white-bg"><option value="">Turno</option><option value="Matutino">Matutino</option><option value="Vespertino">Vespertino</option><option value="Noturno">Noturno</option><option value="Integral">Integral</option></select>
+                    <div class="date-filter-group"><input type="text" id="filter-emp-dd" placeholder="DD" class="filter-input small-date"><input type="text" id="filter-emp-mm" placeholder="MM" class="filter-input small-date"><input type="text" id="filter-emp-yyyy" placeholder="YYYY" class="filter-input medium-date"></div>
+                    <select id="filter-emp-cargo" class="filter-select white-bg"><option value="">Cargo</option><option value="Caixa">Caixa</option><option value="Gerente">Gerente</option><option value="Estoquista">Estoquista</option><option value="Assistente">Assistente</option></select>
+                    <input type="text" id="filter-emp-sup" placeholder="Inserir CPF do Supervisor" class="filter-input medium">
+                </div>
+            </div>
+            <div class="stock-list-container" id="employee-list"></div>
+        </section>
+        <aside class="stock-sidebar">
+            <div class="stock-actions-panel">
+                <div class="stock-actions-header"><h3>REGISTRAR FUNCIONÁRIO</h3></div>
+                <div class="stock-actions-body">
+                    <div id="emp-default-view"><button id="btn-abrir-form-emp" class="btn-register-new-product">REGISTRAR NOVO FUNCIONÁRIO</button></div>
+                    <div id="emp-form-view" class="hidden">
+                        <form class="stock-register-form" id="form-emp-register">
+                            <div class="sidebar-field"><label>CPF</label><input type="text" id="reg-emp-cpf" class="input-sidebar-stock" required></div>
+                            <div class="sidebar-field"><label>Nome</label><input type="text" id="reg-emp-name" class="input-sidebar-stock" required></div>
+                            <div class="sidebar-field"><label>Salário</label><div class="sidebar-price-wrapper"><span>R$</span><input type="number" id="reg-emp-salary" placeholder="00,00" class="input-sidebar-price" step="0.01" required></div></div>
+                            <div class="row-field">
+                                <div class="sidebar-field half"><label>Turno</label><select id="reg-emp-turno" class="input-sidebar-stock"><option value="Matutino">Matutino</option><option value="Vespertino">Vespertino</option><option value="Noturno">Noturno</option><option value="Integral">Integral</option></select></div>
+                                <div class="sidebar-field half"><label>Cargo</label><select id="reg-emp-cargo" class="input-sidebar-stock"><option value="Caixa">Caixa</option><option value="Gerente">Gerente</option><option value="Estoquista">Estoquista</option><option value="Assistente">Assistente</option></select></div>
+                            </div>
+                            <div class="sidebar-field"><label>Data de nascimento</label><div class="date-row-sidebar"><input type="text" id="reg-emp-dd" placeholder="DD" class="input-sidebar-date" maxlength="2"><input type="text" id="reg-emp-mm" placeholder="MM" class="input-sidebar-date" maxlength="2"><input type="text" id="reg-emp-yyyy" placeholder="YYYY" class="input-sidebar-date" maxlength="4"></div></div>
+                            <div class="sidebar-field"><label>CPF do Supervisor</label><input type="text" id="reg-emp-sup" class="input-sidebar-stock"></div>
+                            <div class="sidebar-buttons-group"><button type="submit" class="btn-sidebar-action confirm" id="btn-confirm-emp-reg" disabled>SALVAR</button><button type="button" id="btn-cancel-emp-reg" class="btn-sidebar-action cancel">CANCELAR</button></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="logo-sidebar-container"><div class="logo-wrapper-small"><img src="assets/LogoVermelha.png" alt="Logo" class="sidebar-logo-img"></div></div>
+        </aside>
+    </main>
+    <div id="overlay-emp-edit" class="modal-overlay hidden">
+        <div class="modal-box edit-modal">
+            <div class="modal-header"><h2>EDITAR FUNCIONÁRIO</h2></div>
+            <form id="form-emp-edit" class="modal-form">
+                <div class="modal-field"><label>CPF</label><div class="input-with-icon"><input type="text" id="edit-emp-cpf" readonly><i class="fas fa-lock"></i></div></div>
+                <div class="modal-field"><label>Nome</label><input type="text" id="edit-emp-name" required></div>
+                <div class="modal-field"><label>Salário</label><div class="price-wrapper"><span>R$</span><input type="number" id="edit-emp-salary" step="0.01" required></div></div>
+                <div class="row-field">
+                    <div class="modal-field half"><label>Turno</label><select id="edit-emp-turno"><option value="Matutino">Matutino</option><option value="Vespertino">Vespertino</option><option value="Noturno">Noturno</option><option value="Integral">Integral</option></select></div>
+                    <div class="modal-field half"><label>Cargo</label><select id="edit-emp-cargo"><option value="Caixa">Caixa</option><option value="Gerente">Gerente</option><option value="Estoquista">Estoquista</option><option value="Assistente">Assistente</option></select></div>
+                </div>
+                <div class="modal-field"><label>Data de nascimento</label><div class="date-row-sidebar" style="justify-content:space-between;"><input type="text" id="edit-emp-dd" class="input-sidebar-date" style="color:black;"><input type="text" id="edit-emp-mm" class="input-sidebar-date" style="color:black;"><input type="text" id="edit-emp-yyyy" class="input-sidebar-date" style="color:black;"></div></div>
+                <div class="modal-field"><label>CPF do Supervisor</label><input type="text" id="edit-emp-sup"></div>
+                <div class="modal-actions"><button type="submit" class="btn-modal confirm">SALVAR</button><button type="button" class="btn-modal cancel" id="btn-cancel-emp-edit">CANCELAR</button><button type="button" class="btn-modal delete" id="btn-emp-delete-init">DELETAR</button></div>
+            </form>
+        </div>
+    </div>
+    <div id="overlay-delete" class="modal-overlay hidden">
+        <div class="modal-box delete-modal"><h3>Confirmar Exclusão?</h3><div class="modal-actions row"><button class="btn-modal delete" id="btn-confirm-delete">SIM</button><button class="btn-modal cancel" id="btn-cancel-delete">NÃO</button></div></div>
+    </div>
+    <script src="scripts/shared.js"></script>
+    <script src="scripts/funcionarios.js"></script> 
+</body>
+</html>

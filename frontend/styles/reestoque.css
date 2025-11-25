@@ -1,0 +1,67 @@
+/* --- ESTILOS PÁGINA DE REESTOQUE --- */
+
+.reestoque-content {
+    padding: 20px 40px;
+    height: calc(100vh - 50px);
+    overflow: hidden;
+    background-color: #f7f7f7; /* Fundo padrão claro */
+}
+
+.stock-main-panel {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Barra de Filtros em Linha */
+.filter-group-inline {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.2);
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.filter-label { color: white; font-weight: 700; font-size: 13px; }
+.filter-input.small { width: 80px; text-align: center; }
+.filter-input.medium { width: 130px; }
+
+/* Barra de Ação */
+.action-bar-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+}
+
+.total-display-box {
+    background-color: #ccc;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-weight: 700;
+    color: #333;
+    font-size: 14px;
+}
+
+/* Lista */
+.reestoque-list-header {
+    display: flex;
+    background-color: #ddd;
+    padding: 10px 15px;
+    font-weight: 700;
+    font-size: 11px;
+    color: #333;
+    border-bottom: 2px solid #ccc;
+}
+
+/* Colunas */
+.pur-col-nf { width: 15%; font-size: 12px; font-weight: 700; }
+.pur-col-date { width: 15%; font-size: 12px; color: #555; }
+.pur-col-sup { width: 20%; font-weight: 700; font-size: 13px; }
+.pur-col-prod { width: 20%; font-size: 13px; }
+.pur-col-qtd { width: 10%; text-align: center; font-weight: 700; }
+.pur-col-total { width: 10%; text-align: right; font-weight: 900; color: var(--primary-color); }
+.pur-col-btn { width: 10%; text-align: right; }
+
+.purchase-modal-size { width: 550px; }
