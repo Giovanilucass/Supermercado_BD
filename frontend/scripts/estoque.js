@@ -137,11 +137,11 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             
             const novoProduto = {
-                // Não enviamos código, o banco gera
                 nome: document.getElementById('reg-name').value,
                 preco: parseFloat(document.getElementById('reg-price').value),
                 categoria: document.getElementById('reg-category').value,
-                estoque: 0 // Inicialmente 0
+                estoque: 0, 
+				limite_inferior: parseInt(document.getElementById('reg-limit').value) || 10
             };
 
             // Chama API
@@ -185,6 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.getElementById('edit-promo').value = prod.promocao || 0;
         document.getElementById('edit-qtd').value = prod.estoque || 0;
+		document.getElementById('edit-limit').value = prod.limite_inferior || 10;
         
         updatePromoDisplay(); // Atualiza visual do desconto
 
@@ -213,7 +214,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 preco: parseFloat(document.getElementById('edit-price').value),
                 categoria: document.getElementById('edit-category').value,
                 promocao: document.getElementById('edit-promo').value,
-                estoque: parseInt(document.getElementById('edit-qtd').value)
+                estoque: parseInt(document.getElementById('edit-qtd').value),
+				limite_inferior: parseInt(document.getElementById('edit-limit').value)
             };
 
             const res = await window.App.atualizarProduto(currentEditId, dadosUpdate);
