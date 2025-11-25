@@ -15,9 +15,9 @@ CORS(app, origins="*")
 def get_server(): 
     return jsonify("Servidor existe"), 200
 app.register_blueprint(clientes_blueprint)
-# app.register_blueprint(funcionarios_blueprint)
-# app.register_blueprint(fornecedores_blueprint)
-# app.register_blueprint(produtos_blueprint)
+app.register_blueprint(funcionarios_blueprint)
+app.register_blueprint(fornecedores_blueprint)
+app.register_blueprint(produtos_blueprint)
 app.register_blueprint(auth_blueprint)
 app.register_blueprint(caixa_blueprint)
 app.run("0.0.0.0", port=8000, debug=False)
