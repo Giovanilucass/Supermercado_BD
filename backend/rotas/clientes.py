@@ -1,25 +1,74 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, request, jsonify
 from servicos.clientesDB import clientesDB
 
 clientes_blueprint = Blueprint("clientes", __name__)
 
 @clientes_blueprint.route("/clientes", methods=["GET"])
-def get_clientes():
-    nome = request.args.get("nome", "") # o "" depois faz com que o Python entenda que é uma string
-    cpf = request.args.get("cpf", "")
-    data_nascimento_min = request.args.get("data_nascimento_min", "") #O que está dentro do get é como o frontend ve a variavel
-    data_nascimento_max = request.args.get("data_nascimento_max", "")
-    return jsonify(clientesDB().getclientes(nome, cpf, data_nascimento_min, data_nascimento_max)), 200
+def listar_clientes():
+    nome = request.args.get("nome")
+    cpf = request.args.get("cpf")
+    data_min = request.args.get("min")
+    data_max = request.args.get("max")
+
+    resultados = clientesDB().buscar_clientes(nome, cpf, data_min, data_max)
+    return jsonify(resultados), 200
+
+@clientes_blueprint.route("/clientes/consultar", methods=["GET"])
+def obter_cliente(): 
+    cpf = str(request.args.get("cpf"))
+    
+    if not cpf:
+        return jsonify({"erro": "CPF é obrigatório para consulta"}), 400
+
+    cliente = clientesDB().get_cliente_por_cpf(cpf)
+    
+    if not cliente:
+        return jsonify({"erro": "Cliente não encontrado"}), 404
+    
+    return jsonify(cliente), 200
 
 @clientes_blueprint.route("/clientes", methods=["POST"])
-def post_clientes():
-    print("entrou no post")
-    json = request.get_json()
-    cpf = json.get("cpf")
-    nome = json.get("nome")
-    data_nascimento = json.get("data_nascimento")
-    telefone = json.get("telefone")
-    tipo_telefone = json.get("tipo_telefone")
-    clientesDB().modifica_cliente(cpf, nome, data_nascimento, telefone, tipo_telefone) #FrontEND escolhe escolherá função a ser chamada e seus parametros
-    print("Terminou o post")
-    return jsonify("Terminou o post"), 200
+def criar_cliente():
+    data = request.get_json()
+    
+    if not data.get("cpf") or not data.get("nome"):
+        return jsonify({"erro": "Campos CPF e Nome são obrigatórios"}), 400
+
+    resultado = clientesDB().criar_cliente(data)
+    
+    if "erro" in resultado:
+        status = 409 if "cadastrado" in resultado["erro"] else 400
+        return jsonify(resultado), status
+    
+    return jsonify(resultado), 201
+
+@clientes_blueprint.route("/clientes", methods=["PUT"])
+def atualizar_cliente():
+    data = request.get_json()
+    
+    cpf_alvo = data.get("cpf") 
+    
+    if not cpf_alvo:
+        return jsonify({"erro": "CPF é obrigatório para atualização"}), 400
+
+    resultado = clientesDB().atualizar_cliente(cpf_alvo, data)
+    
+    if "erro" in resultado:
+        return jsonify(resultado), 400
+        
+    return jsonify(resultado), 200
+
+@clientes_blueprint.route("/clientes", methods=["DELETE"])
+def deletar_cliente():
+    data = request.get_json()
+    cpf_para_deletar = data.get("cpf")
+    
+    if not cpf_para_deletar:
+        return jsonify({"erro": "CPF é obrigatório no corpo da requisição"}), 400
+        
+    resultado = clientesDB().deletar_cliente(cpf_para_deletar)
+    
+    if "erro" in resultado:
+        return jsonify(resultado), 400
+        
+    return jsonify(resultado), 200
