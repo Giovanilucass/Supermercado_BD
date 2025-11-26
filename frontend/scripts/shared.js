@@ -1,9 +1,7 @@
 // scripts/shared.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- VERIFICAÇÃO DE LOGIN (Frontend) ---
-    // Mantemos o localStorage apenas para controle visual de "estou logado"
-    // A segurança real virá da sessão HTTP do backend.
+
     const userCpf = localStorage.getItem('funcionario_cpf');
     const path = window.location.pathname;
     const isLoginPage = path.includes('index.html') || path === '/' || path.endsWith('/');
@@ -115,6 +113,7 @@ window.App = {
     login: async (cpf) => {
         const res = await apiRequest('/login', 'POST', { cpf_funcionario: cpf });
         if (res.ok) {
+            localStorage.setItem('funcionario_cpf', cpf);
             return true;
         } else {
             const err = await res.json();
