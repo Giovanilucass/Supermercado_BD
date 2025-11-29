@@ -45,29 +45,21 @@ A partir disso, o banco de dados que será construído deverá auxiliar na gerê
 
 ### Requisitos funcionais do sistema:
 
-● Gerenciar produtos (preço, quantidade, validade, nome, fornecedor, Lote (ID),
-promoções);
+● Gerenciar produtos (preço, quantidade, nome, fornecedor, promoções);
 
-● Alertar produtos com final de validade próxima, fim de estoque, produtos populares;
+● Alertar produtos em fim de estoque, produtos populares;
 
-● Gerenciar estoque, a partir dos critérios: tipo e quantidade dos produtos (perto de
-acabar ou em abundância);
+● Gerenciar estoque, a partir dos critérios: tipo e quantidade dos produtos (perto de acabar);
 
-● Gerenciar fluxo de venda (entrada), a partir dos critérios: ID venda, produtos
-vendidos (tipos, quantidades e lotes), valor de entrada, data e hora (timestamp);
+● Gerenciar fluxo de venda (entrada), a partir dos critérios: NF, produtos vendidos (tipos e quantidades), valor de entrada, data e hora (timestamp);
 
-● Gerenciar funcionários (acessos ao sistema, horários de trabalho, cargos, dados
-pessoais);
+● Gerenciar funcionários (acessos ao sistema, horários de trabalho, cargos, dados pessoais);
 
 ● Gerenciar fornecedores (CNPJ, formas de contato, produtos fornecidos e preço);
 
-● Gerenciar clientes fidelizados (dados relativos ao nome, formas de contato, CPF e
-data de nascimento) para terem acesso aos descontos e promoções do
-supermercado;
+● Gerenciar clientes fidelizados (dados relativos ao nome, formas de contato, CPF e data de nascimento) para terem acesso aos descontos e promoções do supermercado;
 
-● Gerenciar compras a fornecedores (saída), a partir dos critérios: ID compra,
-produtos comprados (tipos, quantidades e lotes), valor de saída, data e hora
-(timestamp)
+● Gerenciar compras a fornecedores (saída), a partir dos critérios: NF, produtos comprados (tipos e quantidades), valor de saída, data e hora (timestamp).
 
 Repositório criado como um projeto de banco de dados para um Supermercado Atacadista por os alunos do segundo semestre de 2025 de Banco de Dados 1.
 
